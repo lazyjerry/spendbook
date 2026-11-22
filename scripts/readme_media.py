@@ -39,10 +39,22 @@ RECORDS = [
     (47, "線上課程", "TWD", "8800", "資料工程，一年內看完。", False),
     (58, "牙齒矯正頭期款", "TWD", "50000", "", False),
     (70, "搬家費", "TWD", "14500", "兩車加拆裝。", False),
+    # 重複發生的事：統計頁的週期與警告頁籤才有內容
+    (190, "機車大保養", "TWD", "3200", "", False),
+    (372, "機車大保養", "TWD", "2900", "", False),
+    (381, "年繳保費", "TWD", "30800", "", False),
+    (400, "沖繩來回機票", "TWD", "15800", "", False),
+    (45, "年繳保費", "TWD", "31250", "車險，和醫療險分開繳。", False),
+    (300, "汽車定期保養", "TWD", "8500", "", False),
+    (480, "汽車定期保養", "TWD", "7900", "", False),
+    (660, "汽車定期保養", "TWD", "8200", "", False),
 ]
 # 影片裡現場新增的那一筆
 NEW = {"title": "換筆電", "amount": "58900", "description": "舊機電池膨脹，這次選 16 吋，刷卡分三期。"}
 MOBILE = {"width": 390, "height": 844}
+# 分享頁預設「本週」，週一拍會是空的；改用網址參數固定成近 30 天
+_today = datetime.date.today()
+SHARE_RANGE = f"from={_today - datetime.timedelta(days=30)}&to={_today}"
 
 
 def must(resp, what):
@@ -77,11 +89,16 @@ def screenshots(browser):
     page.wait_for_timeout(500)
     page.screenshot(path=str(OUT / "month-mobile.png"), full_page=True)
     # 分享圖：從預覽的 <img> 畫回 canvas 取出原尺寸 PNG（直接抓 blob 網址會遇到重畫後被回收）
-    page.goto(f"{BASE}/share")
+    page.goto(f"{BASE}/share?{SHARE_RANGE}")
     page.wait_for_selector("#share-image:not([hidden])")
     for style in ("timeline", "list"):
+        old = page.get_attribute("#share-image", "src")
+        changed = not page.is_checked(f"input[name=style][value={style}]")
         page.check(f"input[name=style][value={style}]", force=True)
-        page.wait_for_timeout(900)
+        # 換樣式要等預覽換成新的 blob 網址，固定等待時間在紀錄多時會抓到舊圖
+        if changed:
+            page.wait_for_function("old => document.querySelector('#share-image').src !== old", arg=old)
+        page.wait_for_timeout(300)
         url = page.evaluate(
             "async () => { const img = document.querySelector('#share-image'); await img.decode(); const c = document.createElement('canvas');"
             " c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img, 0, 0); return c.toDataURL('image/png') }"
@@ -94,9 +111,13 @@ def screenshots(browser):
     page = desktop.new_page()
     page.goto(f"{BASE}/stats")
     page.check("input[name=range][value='90']", force=True)
-    page.wait_for_selector("#trend-chart svg")
+    page.wait_for_selector("#top-list li a")
     page.wait_for_timeout(500)
     page.screenshot(path=str(OUT / "stats.png"), full_page=True)
+    page.click("[data-tab=alert]")
+    page.wait_for_selector("#alert-list li")
+    page.wait_for_timeout(300)
+    page.screenshot(path=str(OUT / "stats-alert.png"), full_page=True)
     desktop.close()
 
 
@@ -140,13 +161,17 @@ def video(browser):
     pause(1500)
     # 統計
     page.goto(f"{BASE}/stats")
-    page.wait_for_selector("#trend-chart svg")
+    page.wait_for_selector("#top-list li a")
     scroll_to("#overview-title")
     pause(1500)
-    scroll_to("#trend-title")
-    pause(1500)
+    for tab, title in (("trend", "#trend-title"), ("cycle", "#cycle-title"), ("alert", "#alert-title")):
+        scroll_to("[data-tabs] .chips")
+        page.click(f"[data-tab={tab}]")
+        pause(600)
+        scroll_to(title)
+        pause(1500)
     # 分享
-    page.goto(f"{BASE}/share")
+    page.goto(f"{BASE}/share?{SHARE_RANGE}")
     page.wait_for_selector("#share-image:not([hidden])")
     scroll_to("#preview-title")
     pause(2200)
