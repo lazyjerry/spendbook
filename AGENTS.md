@@ -16,6 +16,7 @@
 
 - **頁面是產出物**：`public/*.html` 由 `scripts/build_pages.py` 把 `scripts/pages/<頁面>.html` 套進共用頁面殼產生，不手改。改完跑 `npm run pages`。
 - **畫面照 Jerry UI 規範**：成品是 Worker，不是 Pages；`build-jerry-cloudflare-page` skill 在這裡只當畫面規範用，不走它的 Pages 發布流程。`public/jerry-ui.css`、`public/jerry-ui.js`、`public/jerry.png` 是元件庫的固定檔，不改。元件結構用 skill 的 `jerry-ui.py snippet <編號>` 產生；專案專屬樣式寫在 `public/app.css`，選擇器以 `.app-*` 為主體、值只用 token、不覆寫元件庫的 class。頁尾（L3:mono）不放連結。
+- **首頁導言要短**：手機寬度下導言換成兩行，首屏大標就會超過規範的高度（視窗 1/3），`jerry-ui-visual.py` 會失敗。改 `scripts/build_pages.py` 的 `lede` 後要跑 visual。
 - **畫面檢查**：`jerry-ui.py check public` 要 0 錯誤 0 警告（`npm run check` 會跑）；動到版面再跑 `jerry-ui-visual.py public/*.html`。
 - **資料以帳號隔離**：`src/db.js` 每個查詢都帶 `user_id`；照片 key 是 `u<帳號編號>/<uuid>.jpg`，`src/media.js` 讀取時核對擁有者。新增查詢或資料表時照做。
 - **金額存整數**：`records.amount_minor` 是幣別的最小單位。幣別清單有兩份要一起改：`src/db.js` 的 `CURRENCIES`、`public/js/common.js` 的 `CURRENCIES`。設定預設值同理（兩邊的 `DEFAULT_SETTINGS`）。
@@ -28,4 +29,4 @@
 
 ## 驗證
 
-`npm test` 要通過：`scripts/check.sh`（JS 語法、頁面引用、PWA 檔案）加 `scripts/smoke-api.sh`（用暫存資料庫起一個 `wrangler dev`，從 HTTP 介面走一遍登入、紀錄、搜尋、分頁、照片、設定）。改 API 先在 `smoke-api.sh` 加會失敗的檢查。
+`npm test` 要通過：`scripts/check.sh`（JS 語法、頁面引用、PWA 檔案）加 `scripts/smoke-api.sh`（用暫存資料庫起一個 `wrangler dev`，從 HTTP 介面走一遍登入、紀錄、搜尋、分頁、照片、設定）。對正式環境跑要帶目前的帳號密碼，而且會新增再刪除測試紀錄；擁有者改過密碼後不要拿初始密碼去試，會吃掉登入次數。改 API 先在 `smoke-api.sh` 加會失敗的檢查。
