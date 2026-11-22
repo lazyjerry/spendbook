@@ -183,7 +183,7 @@ function renderWeek(list, p) {
     const key = ymd(d);
     const items = (days.get(key) || []).slice().reverse(); // 當天由早到晚
     cols.push(`<section class="app-week-day${key === today ? " app-is-today" : ""}">
-  <h3><button type="button" class="btn is-link" data-day="${key}">${d.getMonth() + 1}/${d.getDate()}（${WEEKDAYS[d.getDay()]}）</button></h3>
+  <h3><button type="button" class="app-week-link" data-day="${key}">${d.getMonth() + 1}/${d.getDate()}（${WEEKDAYS[d.getDay()]}）</button></h3>
   <p class="app-week-total">${items.length ? esc(totalsText(items)) : "—"}</p>
   <ul class="app-week-items">${items.map((r) => `<li><a href="${editUrl(r)}"><time datetime="${esc(r.occurredAt)}">${hm(new Date(r.occurredAt))}</time><span>${esc(r.title)}</span><strong>${esc(formatMoney(r.amountMinor, r.currency))}</strong></a></li>`).join("")}</ul>
 </section>`);

@@ -5,7 +5,8 @@
 ## 規則
 
 - **頁面是產出物**：`public/*.html` 由 `scripts/build_pages.py` 把 `scripts/pages/<頁面>.html` 套進共用頁面殼產生，不手改。改完跑 `npm run pages`。
-- **樣式**：`public/jerry-ui.css`、`public/jerry-ui.js` 是 Jerry UI 的成品，不改。專案專屬樣式寫在 `public/app.css`，只用 `.app-` 開頭的 class 與 Jerry UI 的 token。
+- **畫面照 Jerry UI 規範**：成品是 Worker，不是 Pages；`build-jerry-cloudflare-page` skill 在這裡只當畫面規範用，不走它的 Pages 發布流程。`public/jerry-ui.css`、`public/jerry-ui.js`、`public/jerry.png` 是元件庫的固定檔，不改。元件結構用 skill 的 `jerry-ui.py snippet <編號>` 產生；專案專屬樣式寫在 `public/app.css`，選擇器以 `.app-*` 為主體、值只用 token、不覆寫元件庫的 class。頁尾（L3:mono）不放連結。
+- **畫面檢查**：`jerry-ui.py check public` 要 0 錯誤 0 警告（`npm run check` 會跑）；動到版面再跑 `jerry-ui-visual.py public/*.html`。
 - **資料以帳號隔離**：`src/db.js` 每個查詢都帶 `user_id`；照片 key 是 `u<帳號編號>/<uuid>.jpg`，`src/media.js` 讀取時核對擁有者。新增查詢或資料表時照做。
 - **金額存整數**：`records.amount_minor` 是幣別的最小單位。幣別清單有兩份要一起改：`src/db.js` 的 `CURRENCIES`、`public/js/common.js` 的 `CURRENCIES`。設定預設值同理（兩邊的 `DEFAULT_SETTINGS`）。
 - **時間**：`occurred_at` 存 UTC ISO 字串；依日期分組、範圍換算都在前端用裝置時區做，後端只比對 UTC 時間。

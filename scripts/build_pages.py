@@ -13,7 +13,6 @@ OUT = ROOT / "public"
 BRAND = "花錢事件簿"
 GLYPH = "錢"
 TAGLINE = "錢花去哪，翻一下就知道"
-REPO = "https://github.com/lazyjerry/spendbook"
 
 NAV = [("/", "紀錄"), ("/edit", "新增"), ("/stats", "統計"), ("/share", "分享"), ("/settings", "設定")]
 
@@ -84,7 +83,7 @@ def render(slug, page):
 <main id="main">
 {main}
 </main>
-<footer class="site-foot is-mono">{BRAND} · {TAGLINE} · © 2026 <a href="{REPO}" target="_blank" rel="noopener">lazyjerry</a></footer>
+<footer class="site-foot is-mono">{BRAND} · {TAGLINE} · © 2026 lazyjerry</footer>
 </div>
 <img class="jerry-mark" src="jerry.png" width="1" height="1" alt="" aria-hidden="true">
 </body>

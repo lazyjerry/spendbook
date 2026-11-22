@@ -77,7 +77,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `npm run pages` | 由 `scripts/pages/` 重新產生 `public/*.html` |
 | `npm run icons` | 重新產生 PWA icon 與 favicon（需要 Pillow，macOS 字型） |
 | `npm run vendor` | 把 SimpleWebAuthn 前端複製到 `public/vendor/` |
-| `npm run check` | JS 語法、頁面引用、PWA 檔案檢查 |
+| `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、頁面引用、PWA 檔案檢查 |
 | `npm test` | 上一項加 API 冒煙測試（自己起一個用暫存資料庫的 `wrangler dev`） |
 
 ## 專案結構

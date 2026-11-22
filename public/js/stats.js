@@ -48,10 +48,12 @@ function render() {
   const total = list.reduce((n, r) => n + r.amountMinor, 0);
   const biggest = list.reduce((a, r) => (!a || r.amountMinor > a.amountMinor ? r : a), null);
   const activeDays = new Set(times.map(ymd)).size;
+  const sorted = list.map((r) => r.amountMinor).sort((a, b) => a - b);
+  const median = sorted.length ? (sorted[(sorted.length - 1) >> 1] + sorted[sorted.length >> 1]) / 2 : 0;
   const dd = $("#kpi").querySelectorAll("dd");
   const values = list.length
-    ? [money(total), `${list.length} 筆`, money(round(total / list.length)), money(round(total / dayCount)), `${activeDays} 天`, money(biggest.amountMinor)]
-    : ["—", "0 筆", "—", "—", "0 天", "—"];
+    ? [money(total), `${list.length} 筆`, money(round(total / list.length)), money(round(total / dayCount)), `${activeDays} 天`, money(round(median)), money(biggest.amountMinor)]
+    : ["—", "0 筆", "—", "—", "0 天", "—", "—"];
   dd.forEach((node, i) => {
     node.textContent = values[i];
   });
@@ -110,7 +112,7 @@ function render() {
     ? top
         .map((r) => {
           const at = new Date(r.occurredAt);
-          return `<li><a href="/edit?id=${r.id}">${esc(r.title)}</a><span class="meta">${esc(dateLabel(at))} ${hm(at)}</span><strong class="app-amount">${esc(money(r.amountMinor))}</strong></li>`;
+          return `<li><a href="/edit?id=${r.id}">${esc(r.title)}</a><span class="app-rank-meta">${esc(dateLabel(at))} ${hm(at)}</span><strong class="app-amount">${esc(money(r.amountMinor))}</strong></li>`;
         })
         .join("")
     : '<li class="app-rank-empty">這段範圍沒有紀錄</li>';

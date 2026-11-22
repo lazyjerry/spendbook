@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
-# 靜態檢查：JS 語法、頁面引用的站內檔案都存在、PWA 需要的檔案沒被排除。
+# 靜態檢查：重產頁面、Jerry UI 規範、JS 語法、頁面引用的站內檔案都存在、PWA 需要的檔案沒被排除。
+# Jerry UI 的檢查腳本在 build-jerry-cloudflare-page skill 裡（JERRY_DIR 可覆寫位置）；這台機器沒裝就略過並提示。
 set -euo pipefail
 cd "$(dirname "$0")/.."
+python3 scripts/build_pages.py > /dev/null
+JERRY_DIR=${JERRY_DIR:-$HOME/.ai-global/skills/build-jerry-cloudflare-page/scripts}
+if [ -f "$JERRY_DIR/jerry-ui.py" ]; then
+  python3 "$JERRY_DIR/jerry-ui.py" check public
+else
+  echo "（找不到 $JERRY_DIR/jerry-ui.py，略過 Jerry UI 規範檢查）" >&2
+fi
 for f in public/js/*.js src/*.js public/sw.js; do node --check "$f"; done
 echo "JS 語法檢查通過"
 
