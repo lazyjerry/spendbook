@@ -1,7 +1,7 @@
 {
   "name": "花錢事件簿",
   "short_name": "花錢事件簿",
-  "description": "記下每一筆花費的金額、時間、描述與照片",
+  "description": "記下大筆花費與重要的事：金額、時間、原因與照片",
   "lang": "zh-Hant-TW",
   "id": "/",
   "start_url": "/",

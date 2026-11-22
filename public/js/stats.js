@@ -76,7 +76,7 @@ function render() {
       b.count += 1;
     }
   }
-  $("#trend-sub").textContent = daily ? "每天花了多少" : "每個月花了多少";
+  $("#trend-sub").textContent = daily ? "大筆的錢落在哪幾天" : "大筆的錢落在哪幾個月";
   const chartItems = (rows) => rows.map((b) => ({ label: b.label, value: b.value, title: `${b.name}：${money(b.value)}（${b.count} 筆）` }));
   barChart($("#trend-chart"), chartItems(buckets), { formatValue: money, formatTick: compactTick(currency), ariaLabel: `${daily ? "每日" : "每月"}花費長條圖` });
   $("#trend-table").innerHTML = `<table class="app-table"><thead><tr><th scope="col">${daily ? "日期" : "月份"}</th><th scope="col">筆數</th><th scope="col">花費</th></tr></thead><tbody>${buckets

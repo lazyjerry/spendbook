@@ -85,7 +85,7 @@ function setSummary(list, truncated = false) {
 
 function emptyText() {
   if (state.q) return `找不到符合「${state.q}」的紀錄`;
-  return PAGED.has(state.view) ? "還沒有紀錄，按上面的「新增紀錄」記第一筆" : "這段時間沒有紀錄";
+  return PAGED.has(state.view) ? "還沒有紀錄，按上面的「新增紀錄」記下第一筆大花費" : "這段時間沒有紀錄";
 }
 
 // ---------- 列表、時間軸：分頁續載 ----------

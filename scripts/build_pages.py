@@ -12,19 +12,19 @@ OUT = ROOT / "public"
 
 BRAND = "花錢事件簿"
 GLYPH = "錢"
-TAGLINE = "錢花去哪，翻一下就知道"
+TAGLINE = "大筆的錢、重要的事，記一筆"
 
 NAV = [("/", "紀錄"), ("/edit", "新增"), ("/stats", "統計"), ("/share", "分享"), ("/settings", "設定")]
 
 # slug: 標題、eyebrow、h1 前半、h1 後半、導言、導覽目前頁、頁面腳本、是否為免登入頁、是否載入通行金鑰函式庫
 PAGES = {
-    "index": dict(title="紀錄", eyebrow="SPENDING LOG", h1=("花錢事件簿", "紀錄"), lede="錢花去哪了，翻一下就知道。", nav="/", script="list"),
-    "edit": dict(title="記一筆", eyebrow="NEW RECORD", h1=("花了什麼", "記一筆"), lede="剛付完錢，趁還記得記下來。", nav="/edit", script="edit"),
-    "stats": dict(title="統計", eyebrow="STATISTICS", h1=("花費", "統計"), lede="選一段時間，看錢都花在哪幾天。", nav="/stats", script="stats"),
-    "share": dict(title="分享", eyebrow="SHARE", h1=("這段時間", "分享"), lede="挑一段日期，做成圖片或文字傳給別人。", nav="/share", script="share"),
+    "index": dict(title="紀錄", eyebrow="BIG SPENDING LOG", h1=("花大錢", "事件簿"), lede="買車、旅行、換家電，把值得記住的大筆花費一筆筆留下來。", nav="/", script="list"),
+    "edit": dict(title="記一筆", eyebrow="NEW RECORD", h1=("花了大錢", "記一筆"), lede="剛花了一筆大的，趁還記得為什麼，記下來。", nav="/edit", script="edit"),
+    "stats": dict(title="統計", eyebrow="STATISTICS", h1=("花費", "統計"), lede="選一段時間，看大筆的錢花在哪些事上。", nav="/stats", script="stats"),
+    "share": dict(title="分享", eyebrow="SHARE", h1=("這段時間", "分享"), lede="挑一段日期，把這陣子的大筆花費做成圖片或文字。", nav="/share", script="share"),
     "settings": dict(title="設定", eyebrow="SETTINGS", h1=("偏好與登入", "設定"), lede="預設幣別、照片大小與登入方式。", nav="/settings", script="settings", webauthn=True),
-    "login": dict(title="登入", eyebrow="SPENDING LOG", h1=("花錢事件簿", "登入"), lede="打開只屬於你的花錢紀錄。", script="login", public=True, pill="PRIVATE · PASSKEY", webauthn=True),
-    "offline": dict(title="離線中", eyebrow="SPENDING LOG", h1=("花錢事件簿", "離線"), lede="網路恢復後，從上次停下的地方繼續記。", public=True, pill="OFFLINE"),
+    "login": dict(title="登入", eyebrow="BIG SPENDING LOG", h1=("花大錢事件簿", "登入"), lede="打開只屬於你的大筆花費紀錄。", script="login", public=True, pill="PRIVATE · PASSKEY", webauthn=True),
+    "offline": dict(title="離線中", eyebrow="BIG SPENDING LOG", h1=("花大錢事件簿", "離線"), lede="網路恢復後，從上次停下的地方繼續記。", public=True, pill="OFFLINE"),
 }
 
 
