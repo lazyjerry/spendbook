@@ -114,6 +114,19 @@
 .app-rank .app-rank-empty { display: block; color: var(--muted); font-size: var(--fs-sm); counter-increment: none; }
 .app-rank .app-rank-empty::before { content: none; }
 
+/* 統計的週期與警告清單：左邊色條標狀態 */
+.app-insight { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.app-insight[hidden] { display: none; }
+.app-insight li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-1) var(--space-3); align-items: baseline; padding: var(--space-2) var(--space-3); background: var(--card); border: var(--line); border-left: var(--accent-bar) solid var(--track); }
+.app-insight li.app-insight-warn { border-left-color: var(--danger); }
+.app-insight li.app-insight-ok { border-left-color: var(--green); }
+.app-insight-title { color: var(--ink); font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.app-insight-title a { color: var(--ink); }
+.app-insight-flag { color: var(--ink-2); font-size: var(--fs-xs); font-weight: var(--fw-heavy); white-space: nowrap; }
+.app-insight-warn .app-insight-flag { color: var(--danger-ink); }
+.app-insight-meta { grid-column: 1 / -1; color: var(--ink-2); font-size: var(--fs-sm); overflow-wrap: anywhere; }
+.app-insight li.app-insight-empty { display: block; color: var(--muted); font-size: var(--fs-sm); }
+
 /* 分享 */
 .app-canvas { display: block; width: 100%; max-height: 75vh; height: auto; object-fit: contain; background: var(--paper); border: var(--line); }
 .app-canvas[hidden], .app-share-text[hidden] { display: none; }

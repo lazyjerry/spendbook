@@ -12,6 +12,7 @@ else
 fi
 for f in public/js/*.js src/*.js public/sw.js; do node --check "$f"; done
 echo "JS 語法檢查通過"
+node scripts/test-insights.mjs
 
 missing=0
 for page in public/*.html; do

@@ -200,4 +200,14 @@ settings = await loadSettings();
 const first = presetRange("week");
 fromInput.value = ymd(first.from);
 toInput.value = ymd(addDays(first.to, -1));
+// 統計頁的「做成分享圖」會帶 ?from=YYYY-MM-DD&to=YYYY-MM-DD&q=關鍵字 過來，預填後取消快速範圍的選取
+const params = new URLSearchParams(location.search);
+const pFrom = parseYmd(params.get("from") || "");
+const pTo = parseYmd(params.get("to") || "");
+if (pFrom && pTo && pTo >= pFrom) {
+  fromInput.value = ymd(pFrom);
+  toInput.value = ymd(pTo);
+  for (const radio of form.querySelectorAll('input[name="range"]')) radio.checked = false;
+}
+qInput.value = (params.get("q") || "").slice(0, 100);
 load();

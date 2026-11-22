@@ -2,7 +2,7 @@
 // 頁面與資料都在登入後才拿得到，快取它們會讓登出後、換帳號後還看得到舊內容，所以一律走網路。
 // 只預先快取離線頁與它用到的檔案；線上時這些檔案也照樣走網路，避免部署後新舊版本混用。
 // 改了離線頁或它用到的檔案就把 VERSION 加一，舊快取會在 activate 時清掉。
-const VERSION = 1;
+const VERSION = 2;
 const CACHE = `offline-v${VERSION}`;
 const OFFLINE_URL = "/offline"; // 不要寫 /offline.html：assets 會 307 轉到 /offline，轉址過的回應不能拿來回應頁面導覽
 const PRECACHE = [OFFLINE_URL, "/jerry-ui.css", "/app.css", "/jerry-ui.js", "/jerry.png", "/icons/icon-192.png"];
