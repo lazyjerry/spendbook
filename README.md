@@ -8,13 +8,17 @@
 
 ## 畫面
 
+記下一筆大花費，接著在列表、月曆看到它，再看統計、做成分享圖：
+
+![操作示範：新增一筆大花費、切換列表與月曆、看統計、做分享圖](docs/readme-media/demo.gif)
+
 | 月曆（手機） | 分享圖：時間軸 | 分享圖：列表 |
 |---|---|---|
 | ![手機月曆](docs/readme-media/month-mobile.png) | ![時間軸分享圖](docs/readme-media/share-timeline.png) | ![列表分享圖](docs/readme-media/share-list.png) |
 
 ![統計頁](docs/readme-media/stats.png)
 
-畫面中的紀錄都是虛構的示範資料。
+畫面中的紀錄都是虛構的示範資料。重拍方式見「本機開發」的 `npm run readme-media`。
 
 ## 適合記什麼
 
@@ -89,6 +93,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `npm run pages` | 由 `scripts/pages/` 重新產生 `public/*.html` |
 | `npm run icons` | 重新產生 PWA icon 與 favicon（需要 Pillow，macOS 字型） |
 | `npm run vendor` | 把 SimpleWebAuthn 前端複製到 `public/vendor/` |
+| `npm run readme-media` | 用暫存資料庫與示範資料重拍 README 的截圖與操作影片（需要 Playwright、Pillow、ffmpeg）；影片先存成 `docs/readme-media/demo.mp4`（不進版控）再轉 `demo.gif` |
 | `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、頁面引用、PWA 檔案檢查 |
 | `npm test` | 上一項加 API 冒煙測試（自己起一個用暫存資料庫的 `wrangler dev`） |
 

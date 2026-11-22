@@ -8,3 +8,6 @@ test-results/
 .DS_Store
 __pycache__/
 wrangler.local.jsonc
+
+# README 的示範影片原檔只留在本機，進版控的是轉出來的 gif
+docs/readme-media/*.mp4

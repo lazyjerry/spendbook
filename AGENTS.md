@@ -11,6 +11,7 @@
 - **不做的功能**：分類與預算、收支結餘、快速連續記帳、匯率換算、多人分帳。有人提這類需求時先確認是否偏離定位。
 - **不設金額門檻**：多大算「大」由使用者決定，程式不擋小額。
 - **示範資料**：README 截圖與測試用的示範紀錄也用大筆花費。
+- **README 的圖與影片**：`docs/readme-media/` 由 `npm run readme-media`（`scripts/readme-media.sh` 加 `scripts/readme_media.py`）產生，不手動截圖。影片先錄成 `demo.mp4` 再轉 `demo.gif`；mp4 留在本機、不進版控，進版控的只有 gif 與 png。改了畫面或文案後重拍。
 
 ## 規則
 

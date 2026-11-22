@@ -10,7 +10,8 @@
     "check": "bash scripts/check.sh",
     "test": "bash scripts/check.sh && bash scripts/smoke-api.sh",
     "deploy": "sh scripts/deploy.sh",
-    "pages": "python3 scripts/build_pages.py"
+    "pages": "python3 scripts/build_pages.py",
+    "readme-media": "bash scripts/readme-media.sh"
   },
   "cloudflare": {
     "bindings": {
