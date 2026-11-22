@@ -41,8 +41,9 @@ form.addEventListener("submit", async (e) => {
   btn.disabled = true;
   setStatus(status, "登入中…");
   try {
-    await api("/api/login", { method: "POST", json: { username: user.value.trim(), password: pw.value } });
-    location.href = nextUrl();
+    const data = await api("/api/login", { method: "POST", json: { username: user.value.trim(), password: pw.value } });
+    // 還在用初始密碼：先帶到設定頁的「帳號與密碼」，請使用者換掉
+    location.href = data?.initialPassword ? "/settings?setup=1#account-title" : nextUrl();
   } catch (err) {
     setStatus(status, err.message, "error");
     pw.select();

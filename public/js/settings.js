@@ -215,6 +215,7 @@ changePwBtn.addEventListener("click", async () => {
   try {
     await api("/api/account/password", { method: "PUT", json: { currentPassword: curPw.value, newPassword: newPw.value } });
     for (const f of [curPw, newPw, confirmPw]) f.value = "";
+    document.querySelector(".app-setup-note")?.remove(); // 初始密碼提示：改過密碼就收掉
     setStatus(accountStatus, "已修改密碼，其他裝置要用新密碼重新登入", "ok");
   } catch (err) {
     setStatus(accountStatus, err.message, "error");
@@ -239,6 +240,11 @@ try {
   const me = await api("/api/account");
   currentUsername = me.username;
   usernameInput.value = me.username;
+  // 從登入頁被帶過來改初始密碼：捲到這張卡片並說明要做什麼
+  if (me.initialPassword && new URLSearchParams(location.search).has("setup")) {
+    $("#account-title").scrollIntoView({ block: "start" });
+    setStatus(accountStatus, "先輸入目前的密碼（初始密碼），再改帳號與新密碼");
+  }
 } catch (err) {
   setStatus(accountStatus, err.message, "error");
 }

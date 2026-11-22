@@ -58,6 +58,7 @@ bad_login=$(printf '{"username":"%s","password":"wrong-password"}' "$USERNAME")
 good_login=$(printf '{"username":"%s","password":"%s"}' "$USERNAME" "$PASSWORD")
 expect "密碼錯誤回 401" 401 "$(req POST /api/login "$bad_login")"
 expect "登入成功" 200 "$(req POST /api/login "$good_login")"
+[ "$(field initialPassword)" = "true" ] || [ -z "$dev_pid" ] && ok "第一次登入回報還在用初始密碼" || ng "初始密碼旗標" "$(head -c 200 "$tmp/body")"
 expect "讀帳號" 200 "$(req GET /api/account)"
 
 expect "缺標題回 422" 422 "$(req POST /api/records '{"title":"","currency":"TWD","amount":"100","occurredAt":"2026-11-20T04:00:00.000Z"}')"
@@ -107,6 +108,19 @@ expect "還原設定" 200 "$(req PUT /api/settings '{}')"
 expect "刪除第一筆" 200 "$(req DELETE "/api/records/$id1")"
 expect "刪除第二筆" 200 "$(req DELETE "/api/records/$id2")"
 expect "刪除後讀不到" 404 "$(req GET "/api/records/$id1")"
+# 改帳號與密碼會動到真的帳號，只在自己起的暫存站台上測
+if [ -n "$dev_pid" ]; then
+  [ "$(req GET /api/account >/dev/null; field initialPassword)" = "true" ] && ok "還沒改密碼前帳號帶初始密碼旗標" || ng "帳號的初始密碼旗標" "$(head -c 200 "$tmp/body")"
+  body=$(printf '{"currentPassword":"%s","username":"smoke.user"}' "$PASSWORD")
+  expect "修改帳號" 200 "$(req PUT /api/account/username "$body")"
+  expect "目前的密碼錯誤時不能改密碼" 400 "$(req PUT /api/account/password '{"currentPassword":"wrong-password","newPassword":"new-smoke-password"}')"
+  body=$(printf '{"currentPassword":"%s","newPassword":"new-smoke-password"}' "$PASSWORD")
+  expect "修改密碼" 200 "$(req PUT /api/account/password "$body")"
+  [ "$(req GET /api/account >/dev/null; field initialPassword)" = "false" ] && ok "改過密碼後不再帶初始密碼旗標" || ng "改密碼後的旗標" "$(head -c 200 "$tmp/body")"
+  expect "舊帳號密碼不能再登入" 401 "$(req POST /api/login "$good_login")"
+  expect "新帳號密碼可以登入" 200 "$(req POST /api/login '{"username":"smoke.user","password":"new-smoke-password"}')"
+  [ "$(field initialPassword)" = "false" ] && ok "之後登入不再提示" || ng "登入的初始密碼旗標" "$(head -c 200 "$tmp/body")"
+fi
 expect "登出" 200 "$(req POST /api/logout)"
 expect "登出後 API 回 401" 401 "$(req GET /api/records)"
 

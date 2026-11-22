@@ -78,8 +78,26 @@ export function setStatus(el, text, state = "") {
   else el.textContent = text;
 }
 
-// 頁首右上角：重新整理與登出（登出先 confirm）
+// 還在用初始密碼時，在頁面最上方放一則提示，連到設定頁的「帳號與密碼」。改過密碼後就不再出現。
+// 讀不到帳號資料時不顯示，不擋頁面其他功能。
+async function remindInitialPassword() {
+  let me;
+  try {
+    me = await api("/api/account");
+  } catch {
+    return;
+  }
+  if (!me?.initialPassword) return;
+  const note = document.createElement("aside");
+  note.className = "note app-setup-note";
+  note.innerHTML = `<span class="note-icon" aria-hidden="true">!</span>
+  <div><strong>請更新帳號與密碼</strong><p>你還在用第一次登入的初始帳號密碼。${location.pathname.startsWith("/settings") ? "請在下方「帳號與密碼」改成自己的帳號與新密碼。" : '請到<a href="/settings?setup=1#account-title">設定頁的「帳號與密碼」</a>改成自己的帳號與新密碼。'}</p></div>`;
+  $("#main")?.prepend(note);
+}
+
+// 每個登入後的頁面都會呼叫：頁首右上角的重新整理與登出（登出先 confirm），以及初始密碼提示
 export function bindLogout() {
+  remindInitialPassword();
   $("#refresh-btn")?.addEventListener("click", () => location.reload());
   const btn = $("#logout-btn");
   if (!btn) return;

@@ -10,6 +10,7 @@
 - **金額存整數**：`records.amount_minor` 是幣別的最小單位。幣別清單有兩份要一起改：`src/db.js` 的 `CURRENCIES`、`public/js/common.js` 的 `CURRENCIES`。設定預設值同理（兩邊的 `DEFAULT_SETTINGS`）。
 - **時間**：`occurred_at` 存 UTC ISO 字串；依日期分組、範圍換算都在前端用裝置時區做，後端只比對 UTC 時間。
 - **service worker 不快取私人資料**：`public/sw.js` 只預先快取離線頁與它用到的檔案。改了這些檔案要把 `VERSION` 加一。
+- **初始密碼提示**：帳號的 `password_changed_at` 是 NULL 代表還在用 `APP_PASSWORD` 登入。登入回應與 `/api/account` 以 `initialPassword` 回報，登入頁據此帶去設定頁，各頁由 `public/js/common.js` 的 `bindLogout()` 顯示提示。新增登入後的頁面要呼叫 `bindLogout()`。
 - **機密**：`APP_PASSWORD` 用 `wrangler secret put`，本機放 `.dev.vars`。設定檔、程式碼、文件、log 只寫變數名稱。
 - **個人部署資訊不進版控**：實際的資料庫編號與自訂網域只寫在 `wrangler.local.jsonc`；進版控的 `wrangler.jsonc` 是給 Deploy Button 與本機測試用的通用設定。
 - **錯誤訊息**：一律繁體中文，說明哪裡錯、怎麼改；回給前端的錯誤不含堆疊。

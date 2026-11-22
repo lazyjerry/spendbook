@@ -90,11 +90,17 @@ export async function login(request, env, body) {
   }
   if (!(await checkPassword(env, user, given))) return failSlowly(401, "帳號或密碼不正確，請再試一次");
   if (!user.password_hash) {
-    // 第一次用 APP_PASSWORD 登入：立刻存成雜湊，之後改密碼只動 D1
-    await env.DB.prepare("UPDATE users SET password_hash = ?, password_changed_at = ? WHERE id = ? AND password_hash IS NULL").bind(await hashPassword(given), now(), user.id).run();
+    // 第一次用 APP_PASSWORD 登入：立刻存成雜湊，之後改密碼只動 D1。
+    // password_changed_at 留著不動（新帳號是 NULL），代表使用者還沒自己設過密碼，各頁會提示去改（見 usesInitialPassword）
+    await env.DB.prepare("UPDATE users SET password_hash = ? WHERE id = ? AND password_hash IS NULL").bind(await hashPassword(given), user.id).run();
   }
   await env.DB.prepare("DELETE FROM login_attempts WHERE source = ?").bind(source).run();
-  return json({ ok: true }, 200, { "Set-Cookie": await sessionCookie(env, user) });
+  return json({ ok: true, initialPassword: usesInitialPassword(user) }, 200, { "Set-Cookie": await sessionCookie(env, user) });
+}
+
+// 還在用初始密碼（APP_PASSWORD）：使用者從沒在設定頁改過密碼。登入後與各頁據此提示更新帳號密碼。
+function usesInitialPassword(user) {
+  return !user.password_changed_at;
 }
 
 // 密碼登入的次數限制：每個來源 IP 在 15 分鐘內最多 10 次，登入成功就歸零。
@@ -126,7 +132,7 @@ export async function sessionCookie(env, user) {
 }
 
 export function account(user) {
-  return json({ username: user.username, passwordChangedAt: user.password_changed_at });
+  return json({ username: user.username, passwordChangedAt: user.password_changed_at, initialPassword: usesInitialPassword(user) });
 }
 
 // 修改密碼：要先驗目前的密碼；成功後 session_version 加一，其他裝置要重新登入，這台換發新 cookie。
