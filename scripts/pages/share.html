@@ -1,0 +1,39 @@
+<div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="pick-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="pick-title">選範圍與樣式</h2><p>改了任何一項，右邊的預覽會跟著換</p></div>
+</div>
+<form class="app-form" id="share-form" novalidate><div class="stack"><fieldset class="segmented app-views">
+  <legend class="visually-hidden">快速範圍</legend>
+  <label><input type="radio" name="range" value="today"><span>今天</span></label>
+  <label><input type="radio" name="range" value="week" checked><span>本週</span></label>
+  <label><input type="radio" name="range" value="month"><span>本月</span></label>
+  <label><input type="radio" name="range" value="last-month"><span>上月</span></label>
+</fieldset>
+<div class="field-row"><div class="field">
+  <label for="share-from">開始日期</label>
+  <input id="share-from" class="num app-date" type="date">
+</div><div class="field">
+  <label for="share-to">結束日期</label>
+  <input id="share-to" class="num app-date" type="date">
+</div></div>
+<div class="field">
+  <label for="share-q">只含關鍵字（選填）</label>
+  <input id="share-q" type="search" placeholder="例如：旅行" autocomplete="off" spellcheck="false">
+</div>
+<fieldset class="segmented app-views">
+  <legend class="visually-hidden">分享樣式</legend>
+  <label><input type="radio" name="style" value="timeline" checked><span>時間軸圖</span></label>
+  <label><input type="radio" name="style" value="list"><span>列表圖</span></label>
+  <label><input type="radio" name="style" value="text"><span>文字</span></label>
+</fieldset>
+<div class="switches"><label class="switch"><span><strong>顯示合計</strong><small>筆數與各幣別的總金額</small></span><input type="checkbox" id="opt-total" checked><i aria-hidden="true"></i></label><label class="switch"><span><strong>顯示描述</strong><small>圖片最多兩行，文字樣式完整列出</small></span><input type="checkbox" id="opt-desc" checked><i aria-hidden="true"></i></label><label class="switch"><span><strong>顯示金額</strong><small>關閉後只分享做了什麼，不含價格與合計</small></span><input type="checkbox" id="opt-amount" checked><i aria-hidden="true"></i></label><label class="switch"><span><strong>顯示稱呼</strong><small>在設定頁填的稱呼</small></span><input type="checkbox" id="opt-nickname" checked><i aria-hidden="true"></i></label></div>
+<p class="status" id="share-status" role="status"></p></div></form></section>
+<section class="card accent-blue is-roomy" aria-labelledby="preview-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="preview-title">預覽與分享</h2><p>圖片上方帶 App 標誌</p></div>
+</div>
+<div class="stack"><img class="app-canvas" id="share-image" alt="分享圖預覽" hidden>
+<textarea class="app-share-text" id="share-text" readonly aria-label="分享文字" hidden></textarea>
+<p class="result" id="share-empty" data-empty="這段範圍沒有紀錄"></p>
+<div class="actions"><button class="btn" type="button" id="share-btn" disabled>分享</button><button class="btn secondary" type="button" id="download-btn" disabled>下載圖片</button><button class="btn secondary" type="button" id="copy-btn" disabled hidden>複製文字</button></div>
+<p class="status" id="action-status" role="status"></p></div></section></div>

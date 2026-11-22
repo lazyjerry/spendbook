@@ -1,0 +1,10 @@
+node_modules/
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.credentials.local
+test-results/
+.DS_Store
+__pycache__/
+wrangler.local.jsonc

@@ -1,0 +1,2 @@
+# 第一次登入用的密碼，同時是登入 cookie 的簽章金鑰；請改成夠長的隨機字串
+APP_PASSWORD=change-me

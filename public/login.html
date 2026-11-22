@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>登入｜花錢事件簿</title>
+<meta name="description" content="花錢事件簿：錢花去哪，翻一下就知道">
+<meta name="robots" content="noindex">
+<script>if (typeof HTMLDialogElement === "function") document.documentElement.classList.add("has-dialog");</script>
+<link rel="stylesheet" href="jerry-ui.css">
+<link rel="stylesheet" href="app.css">
+<script src="jerry-ui.js" defer></script>
+<script src="vendor/simplewebauthn/browser.umd.min.js" defer></script>
+<script type="module" src="js/login.js"></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f5f3ed">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="花錢事件簿">
+<script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+<div class="wrap is-wide">
+<header class="top">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">錢</span>花錢事件簿</a>
+  <div class="top-end"><p class="pill">PRIVATE · PASSKEY</p></div>
+</header>
+<header class="masthead">
+  <p class="eyebrow">SPENDING LOG</p>
+  <div class="masthead-grid">
+    <h1><span>花錢事件簿</span><em>登入</em></h1>
+    <p class="lede">打開只屬於你的花錢紀錄。</p>
+  </div>
+</header>
+<main id="main">
+<div class="stack"><div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="login-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="login-title">登入</h2><p>這是私人紀錄，需要通行金鑰或密碼才能使用</p></div>
+</div>
+<div class="stack"><div class="stack"><button class="btn is-block" type="button" id="passkey-btn" hidden>用通行金鑰登入<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="passkey-status" role="alert"></p></div>
+<form class="panel" id="login-form" hidden><div class="field">
+  <label for="username">帳號</label>
+  <input id="username" autocomplete="username" maxlength="64" type="text" placeholder="輸入帳號">
+</div>
+<div class="field">
+  <label for="password">密碼</label>
+  <div class="input-group">
+  <input id="password" type="password" placeholder="輸入密碼" autocomplete="current-password" spellcheck="false">
+  <button type="button" id="toggle-pw" aria-label="顯示密碼">顯示</button>
+</div>
+  <p class="hint">忘記密碼請看 README 的救援步驟</p>
+</div>
+<button class="btn is-block" type="submit">登入<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="login-status" role="alert"></p></form></div></section></div></div>
+</main>
+<footer class="site-foot is-mono">花錢事件簿 · 錢花去哪，翻一下就知道 · © 2026 <a href="https://github.com/lazyjerry/spendbook" target="_blank" rel="noopener">lazyjerry</a></footer>
+</div>
+<img class="jerry-mark" src="jerry.png" width="1" height="1" alt="" aria-hidden="true">
+</body>
+</html>

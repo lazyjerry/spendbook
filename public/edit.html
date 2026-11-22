@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>記一筆｜花錢事件簿</title>
+<meta name="description" content="花錢事件簿：錢花去哪，翻一下就知道">
+<meta name="robots" content="noindex">
+<script>if (typeof HTMLDialogElement === "function") document.documentElement.classList.add("has-dialog");</script>
+<link rel="stylesheet" href="jerry-ui.css">
+<link rel="stylesheet" href="app.css">
+<script src="jerry-ui.js" defer></script>
+<script type="module" src="js/edit.js"></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f5f3ed">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="花錢事件簿">
+<script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+<div class="wrap is-wide">
+<header class="top">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">錢</span>花錢事件簿</a>
+  <div class="top-end"><button class="btn is-sm secondary" type="button" id="refresh-btn">重新整理</button><button class="btn is-sm secondary" type="button" id="logout-btn">登出</button></div>
+</header>
+<header class="masthead">
+  <p class="eyebrow">NEW RECORD</p>
+  <div class="masthead-grid">
+    <h1><span>花了什麼</span><em>記一筆</em></h1>
+    <p class="lede">剛付完錢，趁還記得記下來。</p>
+  </div>
+</header>
+<main id="main">
+<div class="stack"><nav class="chips" aria-label="頁面">
+  <a class="chip" href="/">紀錄</a>
+  <a class="chip" href="/edit" aria-current="page">新增</a>
+  <a class="chip" href="/stats">統計</a>
+  <a class="chip" href="/share">分享</a>
+  <a class="chip" href="/settings">設定</a>
+</nav>
+<form class="app-form" id="record-form" novalidate>
+<div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="basic-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="basic-title">花了什麼</h2><p>標題、金額與時間</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="title">標題</label>
+  <input id="title" maxlength="100" autocomplete="off" type="text" placeholder="例如：午餐便當" required>
+</div>
+<div class="field-row"><div class="field">
+  <label for="currency">幣別</label>
+  <select id="currency"></select>
+</div><div class="field">
+  <label for="amount">金額</label>
+  <input id="amount" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-describedby="amount-hint" required>
+  <p class="hint" id="amount-hint"></p>
+</div></div>
+<div class="field">
+  <label for="occurred-at">時間</label>
+  <div class="input-group">
+  <input id="occurred-at" class="num app-date" type="datetime-local" required>
+  <button type="button" id="now-btn" aria-label="把時間設成現在">現在</button>
+</div>
+  <p class="hint">預設是現在，可以改成實際花錢的時間</p>
+</div>
+<div class="field">
+  <label for="description">描述（選填）</label>
+  <textarea id="description" placeholder="買了什麼、在哪裡、為什麼…" maxlength="1024" spellcheck="false" aria-describedby="description-hint"></textarea>
+  <p class="hint" id="description-hint">0／1024 字</p>
+</div></div></section>
+<section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="photo-title">照片（選填）</h2><p>一筆一張；上傳前在裝置上壓縮，不保留原檔</p></div>
+</div>
+<div class="stack"><div class="actions"><button class="btn" type="button" id="camera-btn">拍照</button><button class="btn secondary" type="button" id="pick-btn">從相簿選擇</button></div>
+<input class="app-file" id="camera-input" type="file" accept="image/*" capture="environment" aria-label="拍照" hidden>
+<input class="app-file" id="pick-input" type="file" accept="image/*" aria-label="從相簿選擇照片" hidden>
+<figure class="app-photo" id="photo-preview" hidden>
+  <img id="photo-img" alt="這筆紀錄的照片">
+  <figcaption><span id="photo-info"></span><button class="btn is-sm secondary" type="button" id="photo-remove-btn">移除照片</button></figcaption>
+</figure>
+<p class="status" id="photo-status" role="status"></p></div></section>
+<section class="card accent-coral is-roomy is-wide" aria-labelledby="save-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">03</span>
+  <div><h2 id="save-title">儲存</h2><p>照片在儲存時一併上傳</p></div>
+</div>
+<div class="stack"><button class="btn is-block" type="submit" id="save-btn">儲存紀錄<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="save-status" role="status"></p>
+<div class="actions"><a class="btn secondary" href="/" id="back-link">回紀錄</a><button hidden class="btn is-link" type="button" id="delete-btn">刪除這筆紀錄</button></div></div></section></div>
+<aside class="note">
+  <span class="note-icon" aria-hidden="true">i</span>
+  <div><strong>照片會送到哪裡</strong><p>照片會先在你的手機或電腦上縮小成 JPEG，清掉拍攝位置等 EXIF 資料後才上傳，原始檔不會傳出去。</p></div>
+</aside>
+</form></div>
+</main>
+<footer class="site-foot is-mono">花錢事件簿 · 錢花去哪，翻一下就知道 · © 2026 <a href="https://github.com/lazyjerry/spendbook" target="_blank" rel="noopener">lazyjerry</a></footer>
+</div>
+<img class="jerry-mark" src="jerry.png" width="1" height="1" alt="" aria-hidden="true">
+</body>
+</html>

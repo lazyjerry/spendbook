@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>統計｜花錢事件簿</title>
+<meta name="description" content="花錢事件簿：錢花去哪，翻一下就知道">
+<meta name="robots" content="noindex">
+<script>if (typeof HTMLDialogElement === "function") document.documentElement.classList.add("has-dialog");</script>
+<link rel="stylesheet" href="jerry-ui.css">
+<link rel="stylesheet" href="app.css">
+<script src="jerry-ui.js" defer></script>
+<script type="module" src="js/stats.js"></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f5f3ed">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="花錢事件簿">
+<script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+<div class="wrap is-wide">
+<header class="top">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">錢</span>花錢事件簿</a>
+  <div class="top-end"><button class="btn is-sm secondary" type="button" id="refresh-btn">重新整理</button><button class="btn is-sm secondary" type="button" id="logout-btn">登出</button></div>
+</header>
+<header class="masthead">
+  <p class="eyebrow">STATISTICS</p>
+  <div class="masthead-grid">
+    <h1><span>花費</span><em>統計</em></h1>
+    <p class="lede">選一段時間，看錢都花在哪幾天。</p>
+  </div>
+</header>
+<main id="main">
+<div class="stack"><nav class="chips" aria-label="頁面">
+  <a class="chip" href="/">紀錄</a>
+  <a class="chip" href="/edit">新增</a>
+  <a class="chip" href="/stats" aria-current="page">統計</a>
+  <a class="chip" href="/share">分享</a>
+  <a class="chip" href="/settings">設定</a>
+</nav>
+<div class="card-grid"><section class="card accent-coral is-roomy is-wide" aria-labelledby="range-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="range-title">範圍與幣別</h2><p>不同幣別分開統計，不做匯率換算</p></div>
+</div>
+<form class="panel" id="range-form"><div class="stack"><fieldset class="segmented app-views">
+  <legend class="visually-hidden">快速範圍</legend>
+  <label><input type="radio" name="range" value="month" checked><span>本月</span></label>
+  <label><input type="radio" name="range" value="last-month"><span>上月</span></label>
+  <label><input type="radio" name="range" value="90"><span>近 90 天</span></label>
+  <label><input type="radio" name="range" value="year"><span>今年</span></label>
+  <label><input type="radio" name="range" value="all"><span>全部</span></label>
+</fieldset>
+<div class="field-row"><div class="field">
+  <label for="range-from">開始日期</label>
+  <input id="range-from" class="num app-date" type="date">
+</div><div class="field">
+  <label for="range-to">結束日期</label>
+  <input id="range-to" class="num app-date" type="date">
+</div></div>
+<div class="field">
+  <label for="stats-currency">幣別</label>
+  <select id="stats-currency" aria-describedby="stats-currency-hint"></select>
+  <p class="hint" id="stats-currency-hint">只列出這段範圍內用過的幣別</p>
+</div>
+<button class="btn is-block" type="submit" id="range-btn">套用日期<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="stats-status" role="status"></p></div></form></section>
+<section class="card accent-blue is-roomy is-wide" aria-labelledby="overview-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="overview-title">總覽</h2><p id="overview-range">範圍內的筆數與花費</p></div>
+</div>
+<dl class="stats app-kpi" id="kpi" aria-live="polite">
+  <div class="stat is-total"><dt>總花費</dt><dd>—</dd></div>
+  <div class="stat"><dt>筆數</dt><dd>—</dd></div>
+  <div class="stat"><dt>平均每筆</dt><dd>—</dd></div>
+  <div class="stat"><dt>平均每天</dt><dd>—</dd></div>
+  <div class="stat"><dt>有花錢的天數</dt><dd>—</dd></div>
+  <div class="stat"><dt>最大一筆</dt><dd>—</dd></div>
+</dl></section>
+<section class="card accent-violet is-roomy is-wide" aria-labelledby="trend-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">03</span>
+  <div><h2 id="trend-title">花費走勢</h2><p id="trend-sub">每天花了多少</p></div>
+</div>
+<div class="stack"><div class="app-chart" id="trend-chart"></div>
+<details class="app-chart-data"><summary>看數字表</summary><div id="trend-table"></div></details></div></section>
+<section class="card accent-green is-roomy" aria-labelledby="weekday-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">04</span>
+  <div><h2 id="weekday-title">星期幾花最多</h2><p>各星期的花費合計</p></div>
+</div>
+<div class="app-chart" id="weekday-chart"></div></section>
+<section class="card accent-blue is-roomy" aria-labelledby="hour-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">05</span>
+  <div><h2 id="hour-title">什麼時段花最多</h2><p>依紀錄的時間分成六個時段</p></div>
+</div>
+<div class="app-chart" id="hour-chart"></div></section>
+<section class="card accent-coral is-roomy is-wide" aria-labelledby="top-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">06</span>
+  <div><h2 id="top-title">最花錢的 10 筆</h2><p>點標題可以修改</p></div>
+</div>
+<ol class="app-rank" id="top-list"></ol></section></div></div>
+</main>
+<footer class="site-foot is-mono">花錢事件簿 · 錢花去哪，翻一下就知道 · © 2026 <a href="https://github.com/lazyjerry/spendbook" target="_blank" rel="noopener">lazyjerry</a></footer>
+</div>
+<img class="jerry-mark" src="jerry.png" width="1" height="1" alt="" aria-hidden="true">
+</body>
+</html>

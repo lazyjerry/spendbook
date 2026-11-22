@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>設定｜花錢事件簿</title>
+<meta name="description" content="花錢事件簿：錢花去哪，翻一下就知道">
+<meta name="robots" content="noindex">
+<script>if (typeof HTMLDialogElement === "function") document.documentElement.classList.add("has-dialog");</script>
+<link rel="stylesheet" href="jerry-ui.css">
+<link rel="stylesheet" href="app.css">
+<script src="jerry-ui.js" defer></script>
+<script src="vendor/simplewebauthn/browser.umd.min.js" defer></script>
+<script type="module" src="js/settings.js"></script>
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#f5f3ed">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="花錢事件簿">
+<script type="module" src="js/pwa.js"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">跳到主要內容</a>
+<div class="wrap is-wide">
+<header class="top">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">錢</span>花錢事件簿</a>
+  <div class="top-end"><button class="btn is-sm secondary" type="button" id="refresh-btn">重新整理</button><button class="btn is-sm secondary" type="button" id="logout-btn">登出</button></div>
+</header>
+<header class="masthead">
+  <p class="eyebrow">SETTINGS</p>
+  <div class="masthead-grid">
+    <h1><span>偏好與登入</span><em>設定</em></h1>
+    <p class="lede">預設幣別、照片大小與登入方式。</p>
+  </div>
+</header>
+<main id="main">
+<div class="stack"><nav class="chips" aria-label="頁面">
+  <a class="chip" href="/">紀錄</a>
+  <a class="chip" href="/edit">新增</a>
+  <a class="chip" href="/stats">統計</a>
+  <a class="chip" href="/share">分享</a>
+  <a class="chip" href="/settings" aria-current="page">設定</a>
+</nav>
+<form class="app-form" id="settings-form" novalidate>
+<div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="prefs-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="prefs-title">偏好</h2><p>新增紀錄與月曆套用的預設值</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="nickname">稱呼</label>
+  <input id="nickname" maxlength="30" autocomplete="nickname" type="text" placeholder="例如：小林" aria-describedby="nickname-hint">
+  <p class="hint" id="nickname-hint">顯示在分享圖與分享文字上</p>
+</div>
+<div class="field">
+  <label for="default-currency">預設幣別</label>
+  <select id="default-currency"></select>
+</div>
+<fieldset class="segmented">
+  <legend class="visually-hidden">一週的第一天</legend>
+  <label><input type="radio" name="week-start" value="1" checked><span>週一開始</span></label>
+  <label><input type="radio" name="week-start" value="0"><span>週日開始</span></label>
+</fieldset></div></section>
+<section class="card accent-blue is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="photo-title">照片壓縮</h2><p>上傳前的長邊尺寸與 JPEG 品質</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="max-edge">照片長邊</label>
+  <select id="max-edge" aria-describedby="max-edge-hint"><option value="1280">1280 px</option><option value="1600" selected>1600 px</option><option value="2048">2048 px</option></select>
+  <p class="hint" id="max-edge-hint">超過才縮小，不放大</p>
+</div>
+<div class="range">
+  <label for="quality">JPEG 品質（%） <output for="quality">80</output></label>
+  <input id="quality" type="range" min="60" max="95" step="5" value="80">
+  <div class="scale"><span>60</span><span>95</span></div>
+</div>
+<button class="btn is-block" type="submit" id="save-btn">儲存偏好與照片設定<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="settings-status" role="status"></p></div></section>
+<section class="card accent-violet is-roomy" aria-labelledby="passkey-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">03</span>
+  <div><h2 id="passkey-title">通行金鑰</h2><p>用指紋、臉部或裝置密碼登入；變更立即生效</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="passkey-name">新增通行金鑰</label>
+  <div class="input-group">
+  <input id="passkey-name" maxlength="40" type="text" placeholder="例如：iPhone、MacBook" autocomplete="off" spellcheck="false">
+  <button type="button" id="add-passkey-btn" aria-label="新增通行金鑰">新增</button>
+</div>
+  <p class="hint">名稱用來辨認是哪台裝置；新增後會跳出系統的驗證視窗</p>
+</div>
+<p class="status" id="passkey-status" role="status"></p>
+<ul class="app-key-list" id="passkey-list" aria-label="已註冊的通行金鑰"></ul>
+<div class="switches"><label class="switch"><span><strong>允許密碼登入</strong><small>至少有一把通行金鑰才能關閉；關閉後登入頁只剩通行金鑰</small></span><input type="checkbox" id="password-login"><i aria-hidden="true"></i></label></div>
+<p class="status" id="password-login-status" role="status"></p></div></section>
+<section class="card accent-green is-roomy" aria-labelledby="account-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">04</span>
+  <div><h2 id="account-title">帳號與密碼</h2><p>修改後其他裝置要重新登入；變更立即生效</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="current-password">目前的密碼</label>
+  <input id="current-password" autocomplete="current-password" maxlength="128" type="password" aria-describedby="current-password-hint">
+  <p class="hint" id="current-password-hint">改帳號或改密碼都要先輸入</p>
+</div>
+<div class="field">
+  <label for="account-username">帳號</label>
+  <div class="input-group">
+  <input id="account-username" autocomplete="username" maxlength="32" type="text" spellcheck="false" autocapitalize="none">
+  <button type="button" id="change-username-btn" aria-label="修改帳號">修改帳號</button>
+</div>
+  <p class="hint">3–32 個字，英文字母、數字、點、底線與連字號</p>
+</div>
+<div class="field">
+  <label for="new-password">新密碼</label>
+  <input id="new-password" autocomplete="new-password" maxlength="128" type="password" aria-describedby="new-password-hint">
+  <p class="hint" id="new-password-hint">8–128 個字，開頭與結尾不能是空白</p>
+</div>
+<div class="field">
+  <label for="confirm-password">再輸入一次新密碼</label>
+  <input id="confirm-password" autocomplete="new-password" maxlength="128" type="password">
+</div>
+<button class="btn is-block" type="button" id="change-pw-btn">修改密碼<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="account-status" role="status"></p></div></section></div>
+</form></div>
+</main>
+<footer class="site-foot is-mono">花錢事件簿 · 錢花去哪，翻一下就知道 · © 2026 <a href="https://github.com/lazyjerry/spendbook" target="_blank" rel="noopener">lazyjerry</a></footer>
+</div>
+<img class="jerry-mark" src="jerry.png" width="1" height="1" alt="" aria-hidden="true">
+</body>
+</html>

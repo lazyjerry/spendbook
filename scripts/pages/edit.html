@@ -1,0 +1,54 @@
+<form class="app-form" id="record-form" novalidate>
+<div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="basic-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">01</span>
+  <div><h2 id="basic-title">花了什麼</h2><p>標題、金額與時間</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="title">標題</label>
+  <input id="title" maxlength="100" autocomplete="off" type="text" placeholder="例如：午餐便當" required>
+</div>
+<div class="field-row"><div class="field">
+  <label for="currency">幣別</label>
+  <select id="currency"></select>
+</div><div class="field">
+  <label for="amount">金額</label>
+  <input id="amount" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-describedby="amount-hint" required>
+  <p class="hint" id="amount-hint"></p>
+</div></div>
+<div class="field">
+  <label for="occurred-at">時間</label>
+  <div class="input-group">
+  <input id="occurred-at" class="num app-date" type="datetime-local" required>
+  <button type="button" id="now-btn" aria-label="把時間設成現在">現在</button>
+</div>
+  <p class="hint">預設是現在，可以改成實際花錢的時間</p>
+</div>
+<div class="field">
+  <label for="description">描述（選填）</label>
+  <textarea id="description" placeholder="買了什麼、在哪裡、為什麼…" maxlength="1024" spellcheck="false" aria-describedby="description-hint"></textarea>
+  <p class="hint" id="description-hint">0／1024 字</p>
+</div></div></section>
+<section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="photo-title">照片（選填）</h2><p>一筆一張；上傳前在裝置上壓縮，不保留原檔</p></div>
+</div>
+<div class="stack"><div class="actions"><button class="btn" type="button" id="camera-btn">拍照</button><button class="btn secondary" type="button" id="pick-btn">從相簿選擇</button></div>
+<input class="app-file" id="camera-input" type="file" accept="image/*" capture="environment" aria-label="拍照" hidden>
+<input class="app-file" id="pick-input" type="file" accept="image/*" aria-label="從相簿選擇照片" hidden>
+<figure class="app-photo" id="photo-preview" hidden>
+  <img id="photo-img" alt="這筆紀錄的照片">
+  <figcaption><span id="photo-info"></span><button class="btn is-sm secondary" type="button" id="photo-remove-btn">移除照片</button></figcaption>
+</figure>
+<p class="status" id="photo-status" role="status"></p></div></section>
+<section class="card accent-coral is-roomy is-wide" aria-labelledby="save-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">03</span>
+  <div><h2 id="save-title">儲存</h2><p>照片在儲存時一併上傳</p></div>
+</div>
+<div class="stack"><button class="btn is-block" type="submit" id="save-btn">儲存紀錄<span class="btn-arrow" aria-hidden="true">→</span></button>
+<p class="status" id="save-status" role="status"></p>
+<div class="actions"><a class="btn secondary" href="/" id="back-link">回紀錄</a><button hidden class="btn is-link" type="button" id="delete-btn">刪除這筆紀錄</button></div></div></section></div>
+<aside class="note">
+  <span class="note-icon" aria-hidden="true">i</span>
+  <div><strong>照片會送到哪裡</strong><p>照片會先在你的手機或電腦上縮小成 JPEG，清掉拍攝位置等 EXIF 資料後才上傳，原始檔不會傳出去。</p></div>
+</aside>
+</form>

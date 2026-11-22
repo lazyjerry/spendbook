@@ -1,0 +1,35 @@
+{
+  "name": "spendbook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "vendor": "bash scripts/vendor.sh",
+    "icons": "python3 scripts/build_icons.py",
+    "dev": "wrangler dev",
+    "migrate:local": "wrangler d1 migrations apply DB --local",
+    "check": "bash scripts/check.sh",
+    "test": "bash scripts/check.sh && bash scripts/smoke-api.sh",
+    "deploy": "sh scripts/deploy.sh",
+    "pages": "python3 scripts/build_pages.py"
+  },
+  "cloudflare": {
+    "bindings": {
+      "APP_PASSWORD": {
+        "description": "第一次登入用的密碼，同時是登入 cookie 的簽章金鑰。請設一組夠長的隨機字串；之後更換會讓所有裝置重新登入。"
+      },
+      "DB": {
+        "description": "D1 資料庫，存花錢紀錄、設定、帳號與通行金鑰公鑰。名稱可自訂。"
+      },
+      "PHOTOS": {
+        "description": "R2 bucket，存壓縮後的照片。名稱可自訂。"
+      }
+    }
+  },
+  "devDependencies": {
+    "wrangler": "^4.152.0"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "14.0.0",
+    "@simplewebauthn/server": "14.0.3"
+  }
+}

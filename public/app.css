@@ -1,0 +1,151 @@
+/* 專案專屬樣式：只用 .app- 開頭的 class 與 jerry-ui.css 的 token（顏色、間距、框線、陰影）。 */
+
+.app-form { display: block; margin: 0; }
+.app-file { display: none; }
+/* iOS 的日期欄預設置中、寬度會撐破欄位 */
+.app-date { display: block; min-width: 0; -webkit-appearance: none; appearance: none; text-align: left; }
+.app-date::-webkit-date-and-time-value { text-align: left; }
+.app-amount { font-family: var(--mono); font-weight: var(--fw-heavy); color: var(--coral-ink); white-space: nowrap; }
+
+/* 檢視方式、快速範圍：選項多，平均分配寬度，手機也排成一列 */
+.app-views { display: flex; width: 100%; }
+.app-views label { flex: 1 1 0; min-width: 0; }
+.app-views span { padding-inline: var(--space-1); text-align: center; white-space: nowrap; }
+
+/* 月曆／週曆／日曆的翻頁列 */
+.app-period { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); }
+.app-period[hidden] { display: none; }
+.app-period-label { flex: 1 1 8em; min-width: 0; text-align: center; font-size: var(--fs-lg); font-weight: var(--fw-black); }
+.app-summary { margin: 0; color: var(--ink-2); font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.app-summary:empty { display: none; }
+.app-view { display: grid; gap: var(--space-3); min-width: 0; }
+.app-view:empty { display: none; }
+
+/* 紀錄卡片（列表、日曆） */
+.app-record-list { display: grid; gap: var(--space-4); }
+.app-record-list:empty { display: none; }
+.app-record { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-4); padding: var(--space-4); background: var(--card); border: var(--line); }
+.app-record.app-has-photo { grid-template-columns: 112px minmax(0, 1fr); }
+.app-record-cover { display: block; align-self: start; }
+.app-record-cover img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border: var(--line); }
+.app-record-body { display: grid; gap: var(--space-1); align-content: start; min-width: 0; }
+.app-record-body p { margin: 0; }
+.app-record-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-1) var(--space-3); }
+.app-record-head h3, .app-record-head h4 { margin: 0; min-width: 0; font-size: var(--fs-lg); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.app-record-head a { color: inherit; text-decoration: none; }
+.app-record-head a:hover, .app-record-head a:focus-visible { text-decoration: underline; }
+.app-record-head .app-amount { font-size: var(--fs-lg); }
+.app-record-text { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 3; -webkit-box-orient: vertical; margin: 0; color: var(--ink-2); font-size: var(--fs-sm); white-space: pre-line; overflow-wrap: anywhere; }
+
+/* 時間軸：左側一條墨色直線，一天一個珊瑚色節點，底下是當天的紀錄 */
+.app-timeline, .app-tl-items { margin: 0; padding: 0; list-style: none; }
+.app-timeline { position: relative; display: grid; gap: var(--space-5); padding-left: 36px; }
+.app-timeline::before { content: ""; position: absolute; left: 11px; top: 10px; bottom: 0; width: 2px; background: var(--ink); }
+.app-tl-day { position: relative; display: grid; gap: var(--space-3); min-width: 0; }
+.app-tl-day::before { content: ""; position: absolute; left: -36px; top: 2px; width: 20px; height: 20px; background: var(--coral); border: var(--line); border-radius: 50%; }
+.app-tl-date { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--space-1) var(--space-3); margin: 0; font-size: var(--fs-lg); font-weight: var(--fw-black); }
+.app-tl-date span { color: var(--ink-2); font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.app-tl-items { display: grid; gap: var(--space-3); }
+.app-tl-item { position: relative; display: grid; grid-template-columns: 3.4em minmax(0, 1fr); gap: var(--space-2); align-items: start; }
+.app-tl-item::before { content: ""; position: absolute; left: -29px; top: 14px; width: 8px; height: 8px; background: var(--ink); border-radius: 50%; }
+.app-tl-item time { padding-top: var(--space-3); color: var(--ink-2); font: var(--fw-bold) var(--fs-sm)/var(--lh-snug) var(--mono); }
+.app-tl-card { display: grid; gap: var(--space-2); min-width: 0; padding: var(--space-3) var(--space-4); background: var(--card); border: var(--line); }
+.app-tl-photo { display: block; max-width: 240px; }
+.app-tl-photo img { display: block; width: 100%; height: auto; border: var(--line); }
+
+/* 月曆 */
+.app-cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-1); }
+.app-cal-head { padding: var(--space-1) 0; color: var(--ink-2); font-size: var(--fs-xs); font-weight: var(--fw-heavy); text-align: center; }
+.app-cal-day { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; min-width: 0; min-height: 76px; padding: var(--space-1) 6px; color: var(--ink); background: var(--card); border: var(--line); font: inherit; text-align: left; cursor: pointer; overflow: hidden; }
+.app-cal-day:hover { box-shadow: var(--shadow-sm); }
+.app-cal-day:focus-visible { outline: var(--focus); outline-offset: 2px; }
+.app-cal-day.app-is-outside { color: var(--muted); background: var(--paper); }
+.app-cal-day.app-has-items { border-top: 6px solid var(--blue); }
+.app-cal-num { font: var(--fw-heavy) var(--fs-sm)/1.2 var(--mono); }
+.app-cal-day.app-is-today .app-cal-num { padding: 1px 6px; color: var(--white); background: var(--ink); }
+.app-cal-amount { max-width: 100%; color: var(--coral-ink); font: var(--fw-heavy) var(--fs-2xs)/1.3 var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-cal-count { color: var(--ink-2); font-size: var(--fs-2xs); line-height: 1.3; white-space: nowrap; }
+
+/* 週曆：桌機七欄，手機一天一列 */
+.app-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--space-2); }
+.app-week-day { display: grid; gap: var(--space-2); align-content: start; min-width: 0; padding: var(--space-2); background: var(--card); border: var(--line); }
+.app-week-day.app-is-today { border-top: 6px solid var(--coral); }
+.app-week-day h3 { margin: 0; font-size: var(--fs-sm); }
+.app-week-day h3 .btn { color: var(--ink); font-weight: var(--fw-black); }
+.app-week-total { margin: 0; color: var(--coral-ink); font: var(--fw-heavy) var(--fs-xs)/var(--lh-snug) var(--mono); overflow-wrap: anywhere; }
+.app-week-items { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
+.app-week-items a { display: grid; gap: 2px; padding: var(--space-1) 6px; color: var(--ink); background: var(--paper); border-left: var(--accent-bar) solid var(--blue); font-size: var(--fs-xs); line-height: var(--lh-snug); text-decoration: none; overflow-wrap: anywhere; }
+.app-week-items a:hover, .app-week-items a:focus-visible { text-decoration: underline; }
+.app-week-items time { color: var(--ink-2); font-family: var(--mono); }
+.app-week-items strong { font-family: var(--mono); }
+
+/* 編輯頁照片 */
+.app-photo { display: grid; gap: var(--space-2); margin: 0; }
+.app-photo[hidden] { display: none; }
+.app-photo img { display: block; width: 100%; max-height: 420px; height: auto; object-fit: contain; background: var(--paper); border: var(--line); }
+.app-photo figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); color: var(--ink-2); font-size: var(--fs-sm); }
+
+/* 統計 */
+.app-kpi { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.app-kpi .stat.is-total { grid-column: auto; }
+.app-kpi .stat dd { font-size: clamp(18px, 2.6vw, 26px); line-height: 1.2; overflow-wrap: anywhere; }
+.app-chart { min-width: 0; }
+.app-chart svg { display: block; overflow: visible; }
+.app-chart-empty { margin: 0; padding: var(--space-5) 0; color: var(--muted); font-size: var(--fs-sm); text-align: center; }
+.app-chart-grid { stroke: var(--track); stroke-width: 1; }
+.app-chart-axis { stroke: var(--ink); stroke-width: 2; }
+.app-chart-tick { fill: var(--ink-2); font: 600 11px/1 var(--mono); }
+.app-chart-value { fill: var(--ink); font: 800 12px/1 var(--mono); }
+.app-chart-fill { fill: var(--blue); }
+.app-chart-hit { fill: transparent; }
+.app-chart-bar:hover .app-chart-fill { fill: var(--ink); }
+.app-chart-bar:hover .app-chart-hit { fill: var(--grid); }
+.app-chart-data summary { cursor: pointer; color: var(--coral-ink); font-size: var(--fs-sm); font-weight: var(--fw-bold); }
+.app-chart-data > div { max-height: 320px; margin-top: var(--space-2); overflow: auto; border: var(--line); }
+.app-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); }
+.app-table th, .app-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--track); text-align: right; white-space: nowrap; }
+.app-table th:first-child { text-align: left; }
+.app-table thead th { position: sticky; top: 0; background: var(--paper); font-weight: var(--fw-heavy); }
+.app-table td { font-family: var(--mono); }
+.app-rank { display: grid; gap: var(--space-2); margin: 0; padding: 0; list-style: none; counter-reset: rank; }
+.app-rank li { display: grid; grid-template-columns: 2em minmax(0, 1fr) auto; gap: 0 var(--space-3); align-items: baseline; padding: var(--space-2) var(--space-3); background: var(--card); border: var(--line); counter-increment: rank; }
+.app-rank li::before { content: counter(rank); grid-row: span 2; color: var(--ink-2); font: var(--fw-heavy) var(--fs-lg)/1.4 var(--mono); }
+.app-rank a { color: var(--ink); font-weight: var(--fw-bold); overflow-wrap: anywhere; }
+.app-rank .app-amount { grid-row: 1 / span 2; grid-column: 3; align-self: center; }
+.app-rank .meta { grid-column: 2; }
+.app-rank .app-rank-empty { display: block; color: var(--muted); font-size: var(--fs-sm); counter-increment: none; }
+.app-rank .app-rank-empty::before { content: none; }
+
+/* 分享 */
+.app-canvas { display: block; width: 100%; max-height: 75vh; height: auto; object-fit: contain; background: var(--paper); border: var(--line); }
+.app-canvas[hidden], .app-share-text[hidden] { display: none; }
+.app-share-text { display: block; width: 100%; min-height: 320px; padding: var(--space-3); color: var(--ink); background: var(--white); border: var(--line); font: var(--fs-sm)/1.7 var(--font); resize: vertical; }
+
+/* 通行金鑰清單（設定頁） */
+.app-key-list { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.app-key-list:empty { display: none; }
+.app-key { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); padding: var(--space-3); background: var(--card); border: var(--line); }
+.app-key-body { display: grid; gap: var(--space-1); min-width: 0; overflow-wrap: anywhere; }
+.app-key-meta { color: var(--ink-2); font-size: var(--fs-sm); }
+
+/* 右上角 toast */
+.app-toast { position: fixed; top: max(var(--space-4), env(safe-area-inset-top)); right: var(--space-4); z-index: 1100; max-width: min(360px, calc(100vw - 2 * var(--space-4))); margin: 0; padding: var(--space-3) var(--space-4); color: var(--ink); background: var(--card); border: var(--line); border-left: var(--accent-bar) solid var(--green); box-shadow: var(--shadow-sm); font-size: var(--fs-sm); font-weight: var(--fw-bold); line-height: 1.5; overflow-wrap: anywhere; pointer-events: none; opacity: 0; transform: translateY(-8px); transition: opacity 0.2s ease, transform 0.2s ease; }
+.app-toast.is-shown { opacity: 1; transform: none; }
+
+@media (max-width: 760px) {
+  .app-record.app-has-photo { grid-template-columns: 84px minmax(0, 1fr); gap: var(--space-3); }
+  .app-record { padding: var(--space-3); }
+  .app-week { grid-template-columns: minmax(0, 1fr); }
+  .app-cal { gap: 2px; }
+  .app-cal-day { min-height: 62px; padding: 2px 3px; }
+  .app-cal-count { display: none; }
+  .app-timeline { padding-left: 30px; }
+  .app-timeline::before { left: 8px; }
+  .app-tl-day::before { left: -30px; width: 18px; height: 18px; }
+  .app-tl-item { grid-template-columns: minmax(0, 1fr); gap: var(--space-1); }
+  .app-tl-item::before { left: -25px; top: 6px; }
+  .app-tl-item time { padding-top: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-toast { transition: none; }
+}
