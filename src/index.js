@@ -3,6 +3,7 @@
 import { account, changePassword, changeUsername, currentUser, login, logout } from "./auth.js";
 import { HttpError, errorResponse, json, parseId, readJson } from "./http.js";
 import * as db from "./db.js";
+import { geoReverse, geoSearch } from "./geo.js";
 import * as media from "./media.js";
 import * as passkey from "./passkey.js";
 
@@ -19,7 +20,7 @@ function withSecurityHeaders(res) {
   return out;
 }
 
-async function api(request, env, url) {
+async function api(request, env, url, ctx) {
   const { pathname } = url;
   const method = request.method;
   let m;
@@ -80,6 +81,9 @@ async function api(request, env, url) {
       return json({ record: result.record });
     }
   }
+  if (pathname === "/api/categories" && method === "GET") return json({ categories: await db.listCategories(env.DB, user.id) });
+  if (pathname === "/api/geo/search" && method === "GET") return geoSearch(url, ctx);
+  if (pathname === "/api/geo/reverse" && method === "GET") return geoReverse(url, ctx);
   if (pathname === "/api/settings") {
     if (method === "GET") return json({ settings: await db.getSettings(env.DB, user.id) });
     if (method === "PUT") return json({ settings: await db.saveSettings(env.DB, user.id, await readJson(request)) });
@@ -89,10 +93,10 @@ async function api(request, env, url) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     try {
-      if (url.pathname.startsWith("/api/")) return withSecurityHeaders(await api(request, env, url));
+      if (url.pathname.startsWith("/api/")) return withSecurityHeaders(await api(request, env, url, ctx));
 
       const user = PUBLIC_PATHS.has(url.pathname) ? null : await currentUser(request, env);
       if (!PUBLIC_PATHS.has(url.pathname) && !user) {

@@ -6,6 +6,9 @@ export const CURRENCIES = { TWD: 2, JPY: 0, USD: 2, EUR: 2, CNY: 2, HKD: 2, KRW:
 const MAX_AMOUNT_MINOR = 99_999_999_999; // 2 位小數時約 10 億
 const TITLE_MAX = 100;
 const DESC_MAX = 1024;
+const PLACE_MAX = 256;
+const MAX_CATEGORIES = 10;
+const CATEGORY_MAX = 20;
 const ISO_UTC = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
 
 const now = () => new Date().toISOString();
@@ -34,6 +37,34 @@ function parseAmount(value, decimals) {
   return Number(m[1]) * 10 ** decimals + Number(frac.padEnd(decimals, "0") || 0);
 }
 
+// 類別：字串陣列，去掉開頭的 #、去重；每個不含空白、最多 CATEGORY_MAX 字，最多 MAX_CATEGORIES 個
+function normalizeCategories(input) {
+  if (input === undefined || input === null) return { list: [] };
+  if (!Array.isArray(input)) return { list: [], error: "類別格式錯誤" };
+  const list = [];
+  for (const raw of input) {
+    const c = typeof raw === "string" ? raw.normalize("NFKC").trim().replace(/^#+/, "").trim() : "";
+    if (!c) continue;
+    if (/\s/.test(c)) return { list, error: `類別「${c}」不能含空白` };
+    if (chars(c) > CATEGORY_MAX) return { list, error: `類別「${c}」超過 ${CATEGORY_MAX} 字` };
+    if (!list.includes(c)) list.push(c);
+  }
+  if (list.length > MAX_CATEGORIES) return { list, error: `類別最多 ${MAX_CATEGORIES} 個` };
+  return { list };
+}
+
+function parseCategories(text) {
+  try {
+    const v = JSON.parse(text || "[]");
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+// 座標：空值（null、undefined、""）代表沒有；有值就要是合法數字
+const coord = (v) => (v === null || v === undefined || v === "" ? null : Number(v));
+
 export function validateRecord(body) {
   const fields = {};
   const title = typeof body?.title === "string" ? body.title.trim() : "";
@@ -55,8 +86,20 @@ export function validateRecord(body) {
   const occurredAt = toIso(body?.occurredAt);
   if (!occurredAt) fields.occurredAt = "請選擇時間";
 
+  const categories = normalizeCategories(body?.categories);
+  if (categories.error) fields.categories = categories.error;
+
+  const place = typeof body?.place === "string" ? body.place.trim() : "";
+  if (chars(place) > PLACE_MAX) fields.place = `地點最多 ${PLACE_MAX} 個字`;
+  const lat = coord(body?.lat);
+  const lng = coord(body?.lng);
+  if ((lat === null) !== (lng === null)) fields.lat = "經緯度要一起填，或一起清空";
+  else if (lat !== null && !(Number.isFinite(lat) && lat >= -90 && lat <= 90)) fields.lat = "緯度要在 -90 到 90 之間";
+  else if (lng !== null && !(Number.isFinite(lng) && lng >= -180 && lng <= 180)) fields.lng = "經度要在 -180 到 180 之間";
+
   if (Object.keys(fields).length) throw fieldError(fields);
-  return { title, currency, amountMinor, description, occurredAt };
+  const round6 = (v) => (v === null ? null : Math.round(v * 1e6) / 1e6); // 小數 6 位約 0.1 公尺
+  return { title, currency, amountMinor, description, occurredAt, categories: categories.list, place, lat: round6(lat), lng: round6(lng) };
 }
 
 function toRecord(row) {
@@ -67,6 +110,10 @@ function toRecord(row) {
     amountMinor: row.amount_minor,
     description: row.description,
     occurredAt: row.occurred_at,
+    categories: parseCategories(row.categories),
+    place: row.place || "",
+    lat: row.lat ?? null,
+    lng: row.lng ?? null,
     photoKey: row.photo_key,
     photoWidth: row.photo_width,
     photoHeight: row.photo_height,
@@ -83,13 +130,13 @@ export function parseCursor(text) {
   return { at, id: Number(id) };
 }
 
-// 列表與搜尋。q 以空白分隔多個關鍵字，全部符合才列出；用 instr() 比對標題與描述（避開 D1 LIKE pattern 的 50 byte 上限）。
+// 列表與搜尋。q 以空白分隔多個關鍵字，全部符合才列出；用 instr() 比對標題、描述、地點與類別（避開 D1 LIKE pattern 的 50 byte 上限）。
 // from／to 是 UTC ISO 時間（含 from、不含 to），由前端依裝置時區換算。
 export async function listRecords(db, userId, { q = "", from = "", to = "", limit = 50, cursor = null }) {
   const where = ["user_id = ?"];
   const binds = [userId];
   for (const word of q.trim().split(/\s+/).filter(Boolean).slice(0, 8)) {
-    where.push("instr(lower(title || char(10) || description), lower(?)) > 0");
+    where.push("instr(lower(title || char(10) || description || char(10) || place || char(10) || categories), lower(?)) > 0");
     binds.push(word.slice(0, 100));
   }
   if (from) {
@@ -130,16 +177,16 @@ export async function getRecord(db, userId, id) {
 export async function createRecord(db, userId, r) {
   const t = now();
   const row = await db
-    .prepare("INSERT INTO records (user_id, title, currency, amount_minor, description, occurred_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
-    .bind(userId, r.title, r.currency, r.amountMinor, r.description, r.occurredAt, t, t)
+    .prepare("INSERT INTO records (user_id, title, currency, amount_minor, description, occurred_at, categories, place, lat, lng, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING *")
+    .bind(userId, r.title, r.currency, r.amountMinor, r.description, r.occurredAt, JSON.stringify(r.categories), r.place, r.lat, r.lng, t, t)
     .first();
   return toRecord(row);
 }
 
 export async function updateRecord(db, userId, id, r) {
   const row = await db
-    .prepare("UPDATE records SET title = ?, currency = ?, amount_minor = ?, description = ?, occurred_at = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING *")
-    .bind(r.title, r.currency, r.amountMinor, r.description, r.occurredAt, now(), id, userId)
+    .prepare("UPDATE records SET title = ?, currency = ?, amount_minor = ?, description = ?, occurred_at = ?, categories = ?, place = ?, lat = ?, lng = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING *")
+    .bind(r.title, r.currency, r.amountMinor, r.description, r.occurredAt, JSON.stringify(r.categories), r.place, r.lat, r.lng, now(), id, userId)
     .first();
   if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
   return toRecord(row);
@@ -161,6 +208,15 @@ export async function setPhoto(db, userId, id, photo) {
     .first();
   if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
   return { record: toRecord(row), oldKey: old.photo_key };
+}
+
+// 這個帳號用過的類別與筆數（多的排前面），給編輯頁的建議清單
+export async function listCategories(db, userId) {
+  const { results } = await db
+    .prepare("SELECT j.value AS name, COUNT(*) AS count FROM records r, json_each(r.categories) j WHERE r.user_id = ? GROUP BY j.value ORDER BY count DESC, j.value")
+    .bind(userId)
+    .all();
+  return results.map((r) => ({ name: r.name, count: r.count }));
 }
 
 // ---------- 設定 ----------

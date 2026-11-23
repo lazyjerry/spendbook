@@ -87,6 +87,26 @@ cursor=$(field nextCursor)
 expect "分頁第二頁" 200 "$(req GET "/api/records?limit=1&cursor=$cursor&q=$(node -e 'process.stdout.write(encodeURIComponent("冒煙測試"))')")"
 [ "$(field records.0.id)" = "$id1" ] && ok "第二頁是較舊的那筆" || ng "第二頁" "$(head -c 200 "$tmp/body")"
 
+# 類別與地點（選填）
+expect "類別含空白回 422" 422 "$(req POST /api/records '{"title":"x","currency":"TWD","amount":"1","occurredAt":"2026-11-20T04:00:00.000Z","categories":["家 電"]}')"
+expect "只填緯度回 422" 422 "$(req POST /api/records '{"title":"x","currency":"TWD","amount":"1","occurredAt":"2026-11-20T04:00:00.000Z","lat":25}')"
+expect "緯度超出範圍回 422" 422 "$(req POST /api/records '{"title":"x","currency":"TWD","amount":"1","occurredAt":"2026-11-20T04:00:00.000Z","lat":91,"lng":121}')"
+place_body='{"title":"冒煙測試冷氣","currency":"TWD","amount":"42800","occurredAt":"2026-11-19T04:00:00.000Z","categories":["#家電","冒煙類別","家電"],"place":"冒煙測試電器行","lat":25.0478123456,"lng":121.517}'
+expect "新增有類別與地點的紀錄" 201 "$(req POST /api/records "$place_body")"
+id3=$(field record.id)
+[ "$(field record.categories.length)" = "2" ] && [ "$(field record.categories.0)" = "家電" ] && ok "類別去掉 # 並去重" || ng "類別內容" "$(head -c 200 "$tmp/body")"
+[ "$(field record.lat)" = "25.047812" ] && [ "$(field record.place)" = "冒煙測試電器行" ] && ok "地點與座標存起來（小數 6 位）" || ng "地點內容" "$(head -c 200 "$tmp/body")"
+expect "搜尋比對類別" 200 "$(req GET "/api/records?q=$(node -e 'process.stdout.write(encodeURIComponent("冒煙類別"))')")"
+[ "$(field records.0.id)" = "$id3" ] && [ "$(field records.length)" = "1" ] && ok "依類別搜得到" || ng "類別搜尋" "$(head -c 200 "$tmp/body")"
+expect "類別清單" 200 "$(req GET /api/categories)"
+node -e 'const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.exit(d.categories.some(c=>c.name==="冒煙類別"&&c.count>=1)?0:1)' "$tmp/body" && ok "類別清單含剛用的類別" || ng "類別清單內容" "$(head -c 200 "$tmp/body")"
+clear_body='{"title":"冒煙測試冷氣","currency":"TWD","amount":"42800","occurredAt":"2026-11-19T04:00:00.000Z","categories":[],"place":"","lat":null,"lng":null}'
+expect "清除類別與地點" 200 "$(req PUT "/api/records/$id3" "$clear_body")"
+[ "$(field record.lat)" = "null" ] && [ "$(field record.categories.length)" = "0" ] && ok "清除後座標為空" || ng "清除結果" "$(head -c 200 "$tmp/body")"
+expect "刪除有地點的那筆" 200 "$(req DELETE "/api/records/$id3")"
+expect "地點查詢缺文字回 400" 400 "$(req GET /api/geo/search)"
+expect "座標反查格式錯誤回 400" 400 "$(req GET '/api/geo/reverse?lat=abc&lng=121')"
+
 # 1x1 JPEG
 node -e 'require("fs").writeFileSync(process.argv[1],Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/yQALCAABAAEBAREA/8wABgAQEAX/2gAIAQEAAD8A0s8g/9k=","base64"))' "$tmp/p.jpg"
 code=$(curl -s -o "$tmp/body" -w '%{http_code}' -b "$jar" -X PUT -H 'Content-Type: image/jpeg' --data-binary "@$tmp/p.jpg" "$BASE/api/records/$id1/photo?w=1&h=1")
