@@ -27,9 +27,41 @@
   <label for="description">描述（選填）</label>
   <textarea id="description" placeholder="為什麼花這筆、在哪裡買、值不值得…" maxlength="1024" spellcheck="false" aria-describedby="description-hint"></textarea>
   <p class="hint" id="description-hint">0／1024 字</p>
-</div></div></section>
-<section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+</div>
+<div class="field">
+  <label for="category-input">類別（選填，可多個）</label>
+  <div class="input-group">
+  <input id="category-input" maxlength="60" enterkeyhint="enter" type="text" placeholder="例如：旅行、3C，或從清單選" autocomplete="off" spellcheck="false">
+  <button type="button" id="category-add-btn" aria-label="加入類別">加入</button>
+</div>
+  <p class="hint" id="category-hint">最多 10 個，每個 20 字內、不含空白；點已加的類別可移除</p>
+</div>
+<div class="app-tag-list" id="category-list" aria-label="已加的類別"></div></div></section>
+<section class="card accent-blue is-roomy" aria-labelledby="place-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">02</span>
+  <div><h2 id="place-title">地點（選填）</h2><p>在哪裡花的；點地圖或查地址，座標與地址互轉</p></div>
+</div>
+<div class="stack"><div class="field">
+  <label for="place">地點名稱或地址</label>
+  <div class="input-group">
+  <input id="place" maxlength="256" type="text" placeholder="例如：那霸機場、台北市信義區松高路 11 號" autocomplete="off" spellcheck="false" aria-describedby="place-hint">
+  <button type="button" id="geocode-btn" aria-label="依地點名稱或地址查座標">查座標</button>
+</div>
+  <p class="hint" id="place-hint">按「查座標」移動地圖標記；點地圖或拖曳標記會自動帶入地址</p>
+</div>
+<div class="app-geo-results" id="geo-results" aria-live="polite"></div>
+<div class="app-map" id="map" role="application" aria-label="地圖：點選或拖曳標記設定花錢的地點"></div>
+<div class="field-row"><div class="field">
+  <label for="lat">緯度</label>
+  <input id="lat" min="-90" max="90" step="any" class="num" type="number" inputmode="decimal">
+</div><div class="field">
+  <label for="lng">經度</label>
+  <input id="lng" min="-180" max="180" step="any" class="num" type="number" inputmode="decimal">
+</div></div>
+<div class="actions"><button class="btn secondary" type="button" id="locate-btn">使用目前位置</button><button class="btn secondary" type="button" id="reverse-btn">用座標查地址</button><button class="btn is-link" type="button" id="place-clear-btn">清除地點</button></div>
+<p class="status" id="geo-status" role="status"></p></div></section>
+<section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+  <span class="index-badge" aria-hidden="true">03</span>
   <div><h2 id="photo-title">照片（選填）</h2><p>收據或實物一張；上傳前在裝置上壓縮</p></div>
 </div>
 <div class="stack"><div class="actions"><button class="btn" type="button" id="camera-btn">拍照</button><button class="btn secondary" type="button" id="pick-btn">從相簿選擇</button></div>
@@ -41,7 +73,7 @@
 </figure>
 <p class="status" id="photo-status" role="status"></p></div></section>
 <section class="card accent-coral is-roomy is-wide" aria-labelledby="save-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">03</span>
+  <span class="index-badge" aria-hidden="true">04</span>
   <div><h2 id="save-title">儲存</h2><p>照片在儲存時一併上傳</p></div>
 </div>
 <div class="stack"><button class="btn is-block" type="submit" id="save-btn">儲存紀錄<span class="btn-arrow" aria-hidden="true">→</span></button>
@@ -50,5 +82,9 @@
 <aside class="note">
   <span class="note-icon" aria-hidden="true">i</span>
   <div><strong>照片會送到哪裡</strong><p>照片會先在你的手機或電腦上縮小成 JPEG，清掉拍攝位置等 EXIF 資料後才上傳，原始檔不會傳出去。</p></div>
+</aside>
+<aside class="note">
+  <span class="note-icon" aria-hidden="true">i</span>
+  <div><strong>地點查詢會送到哪裡</strong><p>地圖圖磚向 OpenStreetMap 下載；「查座標」與點地圖、「用座標查地址」會把輸入的文字或座標經由本站轉送給 OpenStreetMap 查詢。存下來的地點只在你的帳號裡。</p></div>
 </aside>
 </form>

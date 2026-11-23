@@ -19,7 +19,7 @@ NAV = [("/", "紀錄"), ("/edit", "新增"), ("/stats", "統計"), ("/share", "�
 # slug: 標題、eyebrow、h1 前半、h1 後半、導言、導覽目前頁、頁面腳本、是否為免登入頁、是否載入通行金鑰函式庫
 PAGES = {
     "index": dict(title="紀錄", eyebrow="BIG SPENDING LOG", h1=("花大錢", "事件簿"), lede="大筆的錢、重要的事，一筆筆留下來。", nav="/", script="list"),
-    "edit": dict(title="記一筆", eyebrow="NEW RECORD", h1=("花了大錢", "記一筆"), lede="剛花了一筆大的，趁還記得為什麼，記下來。", nav="/edit", script="edit"),
+    "edit": dict(title="記一筆", eyebrow="NEW RECORD", h1=("花了大錢", "記一筆"), lede="剛花了一筆大的，趁還記得為什麼，記下來。", nav="/edit", script="edit", leaflet=True),
     "stats": dict(title="統計", eyebrow="STATISTICS", h1=("花費", "統計"), lede="選一段時間，看大筆的錢花在哪些事上。", nav="/stats", script="stats"),
     "share": dict(title="分享", eyebrow="SHARE", h1=("這段時間", "分享"), lede="挑一段日期，把這陣子的大筆花費做成圖片或文字。", nav="/share", script="share"),
     "settings": dict(title="設定", eyebrow="SETTINGS", h1=("偏好與登入", "設定"), lede="預設幣別、照片大小與登入方式。", nav="/settings", script="settings", webauthn=True),
@@ -44,6 +44,8 @@ def render(slug, page):
     scripts = ['<script src="jerry-ui.js" defer></script>']
     if page.get("webauthn"):
         scripts.append('<script src="vendor/simplewebauthn/browser.umd.min.js" defer></script>')
+    if page.get("leaflet"):
+        scripts.append('<script src="vendor/leaflet/leaflet.js" defer></script>')
     if page.get("script"):
         scripts.append(f'<script type="module" src="js/{page["script"]}.js"></script>')
     main = body if public else f'<div class="stack">{nav_html(page["nav"])}\n{body}</div>'

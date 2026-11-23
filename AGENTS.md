@@ -8,7 +8,8 @@
 
 - **記的是事件，不是流水帳**：每一筆是一件值得記住的事（買車、旅行、換家電），重點在金額、時間與來龍去脈。
 - **文案**：頁面標題、導言、欄位提示、空白狀態、範例文字都從「大筆花費、重要的事」出發；範例用機票、筆電、家電這類，不用午餐、咖啡。品牌名維持「花錢事件簿」，首屏主標用「花大錢／事件簿」。共用的標語在 `scripts/build_pages.py` 的 `TAGLINE`。
-- **不做的功能**：分類與預算、收支結餘、快速連續記帳、匯率換算、多人分帳。有人提這類需求時先確認是否偏離定位。
+- **不做的功能**：預算、收支結餘、快速連續記帳、匯率換算、多人分帳。有人提這類需求時先確認是否偏離定位。
+- **類別與地點是選填的標籤**：類別可多選，只用來整理與搜尋，不做類別預算或類別報表（`docs/afk-skill/adr/012`）；地點是名稱或地址加上選填的經緯度。新增或修改紀錄都不能因為沒填這兩項而擋下。
 - **不設金額門檻**：多大算「大」由使用者決定，程式不擋小額。
 - **示範資料**：README 截圖與測試用的示範紀錄也用大筆花費。
 - **README 的圖與影片**：`docs/readme-media/` 由 `npm run readme-media`（`scripts/readme-media.sh` 加 `scripts/readme_media.py`）產生，不手動截圖。影片先錄成 `demo.mp4` 再轉 `demo.gif`；mp4 留在本機、不進版控，進版控的只有 gif 與 png。改了畫面或文案後重拍。
@@ -24,6 +25,7 @@
 - **時間**：`occurred_at` 存 UTC ISO 字串；依日期分組、範圍換算都在前端用裝置時區做，後端只比對 UTC 時間。
 - **service worker 不快取私人資料**：`public/sw.js` 只預先快取離線頁與它用到的檔案。改了這些檔案要把 `VERSION` 加一。
 - **初始密碼提示**：帳號的 `password_changed_at` 是 NULL 代表還在用 `APP_PASSWORD` 登入。登入回應與 `/api/account` 以 `initialPassword` 回報，登入頁據此帶去設定頁，各頁由 `public/js/common.js` 的 `bindLogout()` 顯示提示。新增登入後的頁面要呼叫 `bindLogout()`。
+- **地點查詢走後端代理**：前端只打 `/api/geo/search`、`/api/geo/reverse`，由 `src/geo.js` 轉 OpenStreetMap Nominatim（通用 User-Agent、快取 1 天）；前端反查等 1.1 秒防抖，遵守每秒 1 次。OSM 圖磚要帶 `referrerPolicy`（全站 `Referrer-Policy: same-origin`）。Leaflet 自行託管在 `public/vendor/leaflet`（`npm run vendor`），樣式表由 `public/js/map.js` 動態載入。測試不打 Nominatim。
 - **機密**：`APP_PASSWORD` 用 `wrangler secret put`，本機放 `.dev.vars`。設定檔、程式碼、文件、log 只寫變數名稱。
 - **個人部署資訊不進版控**：實際的資料庫編號與自訂網域只寫在 `wrangler.local.jsonc`；進版控的 `wrangler.jsonc` 是給 Deploy Button 與本機測試用的通用設定。
 - **錯誤訊息**：一律繁體中文，說明哪裡錯、怎麼改；回給前端的錯誤不含堆疊。

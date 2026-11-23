@@ -164,3 +164,25 @@
 @media (prefers-reduced-motion: reduce) {
   .app-toast { transition: none; }
 }
+
+/* 類別與地點（編輯頁、紀錄卡片）；見 docs/afk-skill/adr/014、015 */
+.app-tag-list { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.app-tag-list:empty { display: none; }
+.app-record-meta { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); color: var(--ink-2); font-size: var(--fs-xs); font-weight: var(--fw-bold); line-height: var(--lh-snug); overflow-wrap: anywhere; }
+.app-record-meta:empty { display: none; }
+.app-map { height: 340px; border: var(--line); background: var(--paper); }
+/* Leaflet 的縮放鈕 z-index 1000、圖層 400，不隔離會蓋過上方卡片彈出的類別建議清單；隔成獨立堆疊層 */
+.app-map { isolation: isolate; }
+.app-geo-results { display: flex; flex-direction: column; gap: var(--space-2); }
+.app-geo-results:empty { display: none; }
+.app-geo-option { justify-content: flex-start; text-align: left; white-space: normal; line-height: var(--lh-snug); }
+.app-combo { position: relative; min-width: 0; }
+.app-combo-pop { position: absolute; top: calc(100% + var(--space-1)); left: 0; right: 0; z-index: 800; display: grid; gap: var(--space-2); padding: var(--space-2); background: var(--card); border: var(--line); box-shadow: var(--shadow-sm); }
+.app-combo-pop[hidden] { display: none; }
+.app-combo-list { max-height: min(320px, 50vh); margin: 0; padding: 0; overflow-y: auto; overscroll-behavior: contain; list-style: none; }
+.app-combo-list:empty { display: none; }
+.app-combo-option { padding: var(--space-2) var(--space-3); border-left: var(--accent-bar) solid transparent; line-height: var(--lh-snug); overflow-wrap: anywhere; cursor: pointer; }
+.app-combo-option.is-active { background: var(--paper); border-left-color: var(--coral); }
+@media (max-width: 760px) {
+  .app-map { height: 280px; }
+}

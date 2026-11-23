@@ -1,7 +1,9 @@
 // 新增／修改紀錄：/edit 是新增，/edit?id=<編號> 是修改；/edit?date=YYYY-MM-DD 帶入指定日期（時間用現在）。
 // 儲存順序：先存紀錄，再處理照片（上傳新的或移除舊的）。照片在裝置上壓成 JPEG 才上傳。
-import { $, CURRENCIES, amountInputValue, api, bindLogout, charCount, currencyInfo, loadSettings, localInputValue, mediaUrl, parseYmd, setFlash, setStatus, showFlash } from "./common.js";
+import { $, CURRENCIES, amountInputValue, api, bindLogout, charCount, currencyInfo, esc, loadSettings, localInputValue, mediaUrl, parseYmd, setFlash, setStatus, showFlash } from "./common.js";
+import { createMap } from "./map.js";
 import { compressImage } from "./photo.js";
+import { tagSuggest } from "./tag-suggest.js";
 
 bindLogout();
 
@@ -97,9 +99,245 @@ $("#photo-remove-btn").addEventListener("click", () => {
   setStatus(photoStatus, removeExisting ? "儲存後會移除照片" : "");
 });
 
+// ---------- 類別（選填，可多個；見 docs/afk-skill/adr/014） ----------
+// 建議清單 = 這個帳號用過的類別（依次數）加上預設建議；預設只是建議，不必照用
+const DEFAULT_CATEGORIES = ["旅行", "3C", "家電", "家具", "交通", "保險", "醫療", "教育", "房屋", "稅費", "紅包禮金", "維修保養"];
+const MAX_CATEGORIES = 10; // 與 src/db.js 相同
+const CATEGORY_HINT = "最多 10 個，每個 20 字內、不含空白；點已加的類別可移除";
+const categoryInput = $("#category-input");
+const categoryHint = $("#category-hint");
+const categoryList = $("#category-list");
+let categories = [];
+let categoryOptions = [...DEFAULT_CATEGORIES];
+
+const cleanCategory = (s) => String(s).normalize("NFKC").trim().replace(/^#+/, "").trim();
+const markInvalid = (el, bad) => el.closest(".field").classList.toggle("is-invalid", bad);
+
+function renderCategories() {
+  categoryList.innerHTML = categories
+    .map((t, i) => `<button class="chip" type="button" data-i="${i}" aria-label="移除類別 ${esc(t)}">#${esc(t)} ×</button>`)
+    .join("");
+}
+
+// 輸入框內容依空白、逗號、頓號拆成多個類別；回傳錯誤訊息，沒有錯誤回空字串
+function addCategories(text) {
+  const parts = String(text).split(/[\s,，、]+/).map(cleanCategory).filter(Boolean);
+  for (const t of parts) {
+    if ([...t].length > 20) return `類別「${t}」超過 20 字`;
+    if (categories.includes(t)) continue;
+    if (categories.length >= MAX_CATEGORIES) return `類別最多 ${MAX_CATEGORIES} 個`;
+    categories.push(t);
+    dirty = true;
+  }
+  renderCategories();
+  return "";
+}
+
+function commitCategoryInput() {
+  const msg = addCategories(categoryInput.value);
+  markInvalid(categoryInput, Boolean(msg));
+  categoryHint.textContent = msg || CATEGORY_HINT;
+  if (!msg) categoryInput.value = "";
+  return msg;
+}
+
+// 建議清單要比下面的 Enter 監聽先註冊：清單有選中項目時由它處理 Enter，不再走 commitCategoryInput
+const suggest = tagSuggest(categoryInput, {
+  options: () => categoryOptions,
+  taken: () => categories,
+  clean: cleanCategory,
+  onPick: (t) => {
+    categoryInput.value = t;
+    commitCategoryInput();
+  },
+});
+$("#category-add-btn").addEventListener("click", () => {
+  commitCategoryInput();
+  categoryInput.focus();
+});
+categoryInput.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.isComposing) return; // 中文輸入法選字時的 Enter 不算
+  e.preventDefault();
+  commitCategoryInput();
+});
+categoryList.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-i]");
+  if (!btn) return;
+  categories.splice(Number(btn.dataset.i), 1);
+  dirty = true;
+  renderCategories();
+  categoryInput.focus();
+});
+
+async function loadCategoryOptions() {
+  try {
+    const data = await api("/api/categories");
+    categoryOptions = [...new Set([...data.categories.map((c) => c.name), ...DEFAULT_CATEGORIES])];
+    suggest.refresh();
+  } catch {
+    // 建議清單拿不到不影響輸入，仍有預設建議
+  }
+}
+
+// ---------- 地點（選填；地圖與地址互轉，見 docs/afk-skill/adr/015） ----------
+const FALLBACK = { lat: 25.0478, lng: 121.517 }; // 台北車站：沒有座標時地圖的起點，不放標記
+const place = $("#place");
+const lat = $("#lat");
+const lng = $("#lng");
+const geoStatus = $("#geo-status");
+const geoResults = $("#geo-results");
+let geoMap = null;
+let reverseTimer;
+let reverseSeq = 0;
+let autoPlace = ""; // 上次自動帶入的地址；地點欄還是它（或空白）時，移動標記才覆蓋，自己打的名稱不蓋掉
+
+const clipPlace = (s) => [...String(s || "")].slice(0, 256).join("");
+const readCoords = () => {
+  const la = Number(lat.value);
+  const ln = Number(lng.value);
+  return lat.value !== "" && lng.value !== "" && Number.isFinite(la) && Number.isFinite(ln) ? { lat: la, lng: ln } : null;
+};
+
+function setCoords(la, ln, { moveMap = true, zoom } = {}) {
+  lat.value = la.toFixed(6);
+  lng.value = ln.toFixed(6);
+  markInvalid(lat, false);
+  markInvalid(lng, false);
+  dirty = true;
+  if (moveMap && geoMap) geoMap.setPosition(la, ln, zoom);
+}
+
+function fillPlace(text, { force = false } = {}) {
+  if (!text) return false;
+  if (!force && place.value.trim() && place.value !== autoPlace) return false;
+  place.value = autoPlace = clipPlace(text);
+  markInvalid(place, false);
+  dirty = true;
+  return true;
+}
+
+async function reverseLookup({ force = true } = {}) {
+  const c = readCoords();
+  if (!c) {
+    setStatus(geoStatus, "請先輸入緯度與經度，或在地圖上點選位置", "error");
+    return;
+  }
+  const seq = ++reverseSeq;
+  setStatus(geoStatus, "依座標查詢地址中…");
+  try {
+    const data = await api(`/api/geo/reverse?lat=${c.lat}&lng=${c.lng}`);
+    if (seq !== reverseSeq) return;
+    const filled = fillPlace(data.address, { force });
+    setStatus(geoStatus, filled ? "已依座標帶入地址，可再手動修改" : `座標已更新；地點欄保留你輸入的名稱（這裡是 ${data.address}）`, "ok");
+  } catch (err) {
+    if (seq === reverseSeq) setStatus(geoStatus, err.message, "error");
+  }
+}
+
+function scheduleReverse() {
+  clearTimeout(reverseTimer);
+  reverseTimer = setTimeout(() => reverseLookup({ force: false }), 1100); // Nominatim 每秒最多 1 次
+}
+
+function applyResult(r) {
+  setCoords(r.lat, r.lng, { zoom: 17 });
+  geoResults.innerHTML = "";
+  setStatus(geoStatus, "已依查詢移動標記，可再拖曳微調", "ok");
+}
+
+async function geocode() {
+  const q = place.value.trim();
+  geoResults.innerHTML = "";
+  if (!q) {
+    markInvalid(place, true);
+    setStatus(geoStatus, "請先輸入地點名稱或地址，再按「查座標」", "error");
+    place.focus();
+    return;
+  }
+  setStatus(geoStatus, "依地點查詢座標中…");
+  try {
+    const data = await api("/api/geo/search?q=" + encodeURIComponent(q));
+    if (!data.results.length) {
+      setStatus(geoStatus, "查不到這個地點，試著去掉樓層、巷弄，或直接在地圖上點選", "error");
+      return;
+    }
+    if (data.results.length === 1) return applyResult(data.results[0]);
+    geoResults.innerHTML = data.results
+      .map((r, i) => `<button class="btn is-sm secondary app-geo-option" type="button" data-i="${i}">${esc(r.label)}</button>`)
+      .join("");
+    geoResults.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => applyResult(data.results[Number(b.dataset.i)])));
+    setStatus(geoStatus, `找到 ${data.results.length} 個地點，請選一個`, "ok");
+  } catch (err) {
+    setStatus(geoStatus, err.message, "error");
+  }
+}
+
+function locate() {
+  if (!navigator.geolocation) {
+    setStatus(geoStatus, "這個瀏覽器不支援定位，請在地圖上點選或輸入地點", "error");
+    return;
+  }
+  setStatus(geoStatus, "取得目前位置中…");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setCoords(pos.coords.latitude, pos.coords.longitude, { zoom: 17 });
+      reverseLookup({ force: false });
+    },
+    (err) => {
+      const msg = err.code === 1 ? "沒有定位權限，請在瀏覽器允許位置存取，或直接在地圖上點選" : "無法取得目前位置，請在地圖上點選或輸入地點";
+      setStatus(geoStatus, msg, "error");
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+  );
+}
+
+function clearPlace() {
+  clearTimeout(reverseTimer);
+  reverseSeq++;
+  place.value = lat.value = lng.value = autoPlace = "";
+  geoResults.innerHTML = "";
+  for (const el of [place, lat, lng]) markInvalid(el, false);
+  if (geoMap) geoMap.clear();
+  dirty = true;
+  setStatus(geoStatus, "已清除地點與座標");
+}
+
+async function initMap(start) {
+  try {
+    geoMap = await createMap($("#map"), {
+      lat: (start || FALLBACK).lat,
+      lng: (start || FALLBACK).lng,
+      zoom: start ? 16 : 12,
+      pinned: Boolean(start),
+      onPick(la, ln) {
+        setCoords(la, ln, { moveMap: false });
+        scheduleReverse();
+      },
+    });
+  } catch (err) {
+    setStatus(geoStatus, err.message, "error");
+  }
+}
+
+for (const el of [lat, lng]) {
+  el.addEventListener("change", () => {
+    const c = readCoords();
+    if (c && geoMap) geoMap.setPosition(c.lat, c.lng);
+  });
+}
+$("#geocode-btn").addEventListener("click", geocode);
+place.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  e.preventDefault();
+  geocode();
+});
+$("#reverse-btn").addEventListener("click", () => reverseLookup());
+$("#locate-btn").addEventListener("click", locate);
+$("#place-clear-btn").addEventListener("click", clearPlace);
+
 // ---------- 儲存 ----------
 function focusField(fields) {
-  const map = { title, currency, amount, description, occurredAt };
+  const map = { title, currency, amount, description, occurredAt, categories: categoryInput, place, lat, lng };
   const key = Object.keys(fields || {}).find((k) => map[k]);
   if (key) map[key].focus();
 }
@@ -108,11 +346,14 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (saveBtn.disabled) return;
   const at = new Date(occurredAt.value);
+  const categoryError = categoryInput.value.trim() ? commitCategoryInput() : ""; // 輸入框還有沒按「加入」的類別，一併存
   const local = {};
   if (!title.value.trim()) local.title = "請輸入標題";
   else if (!/^\d[\d,]*(\.\d+)?$/.test(amount.value.trim())) local.amount = "請輸入金額（數字）";
   else if (!occurredAt.value || Number.isNaN(at.getTime())) local.occurredAt = "請選擇時間";
   else if (charCount(description.value.trim()) > 1024) local.description = "描述最多 1024 個字";
+  else if (categoryError) local.categories = categoryError;
+  else if ((lat.value === "") !== (lng.value === "")) local[lat.value === "" ? "lat" : "lng"] = "經緯度要一起填，或一起清空";
   if (Object.keys(local).length) {
     setStatus(saveStatus, Object.values(local)[0], "error");
     focusField(local);
@@ -124,6 +365,7 @@ form.addEventListener("submit", async (e) => {
   let savedId = id;
   try {
     const json = { title: title.value, currency: currency.value, amount: amount.value.trim(), description: description.value, occurredAt: at.toISOString() };
+    Object.assign(json, { categories, place: place.value, lat: lat.value === "" ? null : Number(lat.value), lng: lng.value === "" ? null : Number(lng.value) });
     const data = id ? await api(`/api/records/${id}`, { method: "PUT", json }) : await api("/api/records", { method: "POST", json });
     savedId = data.record.id;
   } catch (err) {
@@ -189,6 +431,8 @@ window.addEventListener("beforeunload", (e) => {
 // ---------- 載入 ----------
 // 設定與紀錄載回來之前先鎖住表單，免得先改的欄位被載入結果蓋掉
 form.inert = true;
+loadCategoryOptions();
+let mapStart = null;
 try {
   settings = await loadSettings();
   if (id) {
@@ -199,6 +443,13 @@ try {
     occurredAt.value = localInputValue(new Date(record.occurredAt));
     description.value = record.description;
     existingPhotoKey = record.photoKey;
+    categories = [...record.categories];
+    place.value = record.place;
+    if (record.lat != null && record.lng != null) {
+      lat.value = record.lat.toFixed(6);
+      lng.value = record.lng.toFixed(6);
+      mapStart = { lat: record.lat, lng: record.lng };
+    }
     deleteBtn.hidden = false;
     document.title = document.title.replace("記一筆", "修改紀錄");
     $("#save-title").textContent = "儲存修改";
@@ -213,7 +464,9 @@ try {
   updateAmountHint();
   updateDescHint();
   showPhoto();
+  renderCategories();
   form.inert = false;
+  initMap(mapStart); // 不等地圖：地圖元件載入失敗也不影響其他欄位
   if (!id) title.focus();
   showFlash();
 } catch (err) {

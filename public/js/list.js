@@ -38,6 +38,11 @@ function syncUrl() {
 const editUrl = (r) => `/edit?id=${r.id}`;
 const newUrl = (date) => `/edit?date=${ymd(date)}`;
 const thumb = (r, cls) => (r.photoKey ? `<a class="${cls}" href="${editUrl(r)}" tabindex="-1" aria-hidden="true"><img src="${esc(mediaUrl(r.photoKey))}" alt="" loading="lazy" width="${r.photoWidth || 1}" height="${r.photoHeight || 1}"></a>` : "");
+// 類別與地點（都是選填，沒有就不顯示）
+const recordMeta = (r) =>
+  r.categories?.length || r.place
+    ? `<p class="app-record-meta">${(r.categories || []).map((c) => `<span>#${esc(c)}</span>`).join("")}${r.place ? `<span>地點：${esc(r.place)}</span>` : ""}</p>`
+    : "";
 
 // 一筆紀錄的卡片；withDate 時顯示完整日期，否則只有時間
 function recordCard(r, withDate) {
@@ -47,6 +52,7 @@ function recordCard(r, withDate) {
   <div class="app-record-body">
     <div class="app-record-head"><h3><a href="${editUrl(r)}">${esc(r.title)}</a></h3><strong class="app-amount">${esc(formatMoney(r.amountMinor, r.currency))}</strong></div>
     <p class="meta"><time datetime="${esc(r.occurredAt)}">${withDate ? esc(dateLabel(at)) + " " : ""}${hm(at)}</time></p>
+    ${recordMeta(r)}
     ${r.description ? `<p class="app-record-text">${esc(r.description)}</p>` : ""}
   </div>
 </article>`;
@@ -67,6 +73,7 @@ function renderTimeline(list = records) {
       const at = new Date(r.occurredAt);
       return `<li class="app-tl-item"><time datetime="${esc(r.occurredAt)}">${hm(at)}</time>
     <div class="app-tl-card"><div class="app-record-head"><h4><a href="${editUrl(r)}">${esc(r.title)}</a></h4><strong class="app-amount">${esc(formatMoney(r.amountMinor, r.currency))}</strong></div>
+    ${recordMeta(r)}
     ${r.description ? `<p class="app-record-text">${esc(r.description)}</p>` : ""}${thumb(r, "app-tl-photo")}</div></li>`;
     })
     .join("")}</ol>
