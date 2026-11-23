@@ -39,18 +39,70 @@ RECORDS = [
     (47, "線上課程", "TWD", "8800", "資料工程，一年內看完。", False),
     (58, "牙齒矯正頭期款", "TWD", "50000", "", False),
     (70, "搬家費", "TWD", "14500", "兩車加拆裝。", False),
-    # 重複發生的事：統計頁的週期與警告頁籤才有內容
-    (190, "機車大保養", "TWD", "3200", "", False),
-    (372, "機車大保養", "TWD", "2900", "", False),
+    # 更早的紀錄：橫跨兩年，統計的走勢、週期與警告頁籤才有東西看。都在 30 天以前，不影響分享圖
+    # 每年一次的事（週期正常）
     (381, "年繳保費", "TWD", "30800", "", False),
+    (745, "年繳保費", "TWD", "30200", "", False),
+    (390, "健檢", "TWD", "11500", "", False),
+    (755, "健檢", "TWD", "11000", "", False),
     (400, "沖繩來回機票", "TWD", "15800", "", False),
+    (760, "沖繩來回機票", "TWD", "16200", "", False),
+    (176, "房屋稅", "TWD", "18600", "", False),
+    (541, "房屋稅", "TWD", "18200", "", False),
+    (358, "地價稅", "TWD", "9800", "", False),
+    (723, "地價稅", "TWD", "9600", "", False),
+    (279, "過年紅包", "TWD", "36000", "爸媽、外婆和姪子們。", False),
+    (663, "過年紅包", "TWD", "32000", "", False),
+    # 週期有狀況：保費一個月內繳了兩次（太密）、汽車保養超過半年沒做（太久沒發生）
     (45, "年繳保費", "TWD", "31250", "車險，和醫療險分開繳。", False),
     (300, "汽車定期保養", "TWD", "8500", "", False),
     (480, "汽車定期保養", "TWD", "7900", "", False),
     (660, "汽車定期保養", "TWD", "8200", "", False),
+    # 金額警告：這次機車保養比平常貴、廚房翻修遠高於平常的大筆
+    (190, "機車大保養", "TWD", "3200", "", False),
+    (372, "機車大保養", "TWD", "2900", "", False),
+    (555, "機車大保養", "TWD", "3100", "", False),
+    (95, "廚房翻修", "TWD", "268000", "櫥櫃、檯面與抽油煙機一起換。", False),
+    # 其他一次性的大花費，讓每個月的走勢有高有低
+    (82, "換手機", "TWD", "36900", "舊的用了四年。", False),
+    (128, "日本來回機票", "TWD", "21800", "賞楓，五天四夜。", False),
+    (150, "電動機車", "TWD", "98000", "補助後的價格。", False),
+    (215, "冰箱", "TWD", "45900", "", False),
+    (248, "婚禮禮金", "TWD", "12000", "大學同學。", False),
+    (330, "雙人床墊", "TWD", "32800", "", False),
+    (430, "筆電", "TWD", "52900", "", False),
+    (610, "沙發", "TWD", "41500", "", False),
 ]
-# 影片裡現場新增的那一筆
-NEW = {"title": "換筆電", "amount": "58900", "description": "舊機電池膨脹，這次選 16 吋，刷卡分三期。"}
+# 示範紀錄的類別與地點（依標題套用，同名的每一筆都套）：標題 → (類別, 地點, 緯度, 經度)
+DETAILS = {
+    "沖繩來回機票": (["旅行", "沖繩"], "桃園國際機場", 25.0797, 121.2342),
+    "沖繩住宿四晚": (["旅行", "沖繩"], "沖繩縣那霸市", 26.2124, 127.6809),
+    "冷氣汰舊換新": (["家電"], "", None, None),
+    "機車大保養": (["交通", "維修保養"], "", None, None),
+    "年繳保費": (["保險"], "", None, None),
+    "人體工學椅": (["家具"], "", None, None),
+    "健檢": (["醫療"], "", None, None),
+    "相機鏡頭": (["3C", "旅行"], "大阪市北區梅田", 34.7025, 135.4959),
+    "洗衣機": (["家電"], "", None, None),
+    "線上課程": (["教育"], "", None, None),
+    "牙齒矯正頭期款": (["醫療"], "", None, None),
+    "房屋稅": (["稅費", "房屋"], "", None, None),
+    "地價稅": (["稅費", "房屋"], "", None, None),
+    "過年紅包": (["紅包禮金"], "", None, None),
+    "表弟結婚紅包": (["紅包禮金"], "", None, None),
+    "婚禮禮金": (["紅包禮金"], "", None, None),
+    "汽車定期保養": (["交通", "維修保養"], "", None, None),
+    "廚房翻修": (["房屋", "家具"], "", None, None),
+    "換手機": (["3C"], "", None, None),
+    "日本來回機票": (["旅行"], "", None, None),
+    "電動機車": (["交通"], "", None, None),
+    "冰箱": (["家電"], "", None, None),
+    "雙人床墊": (["家具"], "", None, None),
+    "筆電": (["3C"], "", None, None),
+    "沙發": (["家具"], "", None, None),
+}
+# 影片裡現場新增的那一筆（地點只打名稱、不按查座標，錄影不打 OpenStreetMap）
+NEW = {"title": "換筆電", "amount": "58900", "description": "舊機電池膨脹，這次選 16 吋，刷卡分三期。", "category": "3C", "place": "光華商場"}
 MOBILE = {"width": 390, "height": 844}
 # 分享頁預設「本週」，週一拍會是空的；改用網址參數固定成近 30 天
 _today = datetime.date.today()
@@ -73,6 +125,9 @@ def login_and_seed(ctx):
     for days, title, currency, amount, description, photo in RECORDS:
         at = now - datetime.timedelta(days=days, hours=rng.randint(1, 9), minutes=rng.randint(0, 59))
         body = {"title": title, "currency": currency, "amount": amount, "description": description, "occurredAt": at.isoformat().replace("+00:00", "Z")}
+        if title in DETAILS:
+            cats, place, lat, lng = DETAILS[title]
+            body.update(categories=cats, place=place, lat=lat, lng=lng)
         rid = must(ctx.request.post(f"{BASE}/api/records", data=body), f"新增「{title}」").json()["record"]["id"]
         if photo:
             buf = io.BytesIO()
@@ -110,7 +165,7 @@ def screenshots(browser):
     login_and_seed(desktop)
     page = desktop.new_page()
     page.goto(f"{BASE}/stats")
-    page.check("input[name=range][value='90']", force=True)
+    page.check("input[name=range][value=year]", force=True)
     page.wait_for_selector("#top-list li a")
     page.wait_for_timeout(500)
     page.screenshot(path=str(OUT / "stats.png"), full_page=True)
@@ -122,7 +177,7 @@ def screenshots(browser):
 
 
 def video(browser):
-    """一段使用情境：記下一筆大花費 → 在列表、時間軸、月曆看到它 → 看統計 → 做成分享圖。"""
+    """一段使用情境：記下一筆大花費 → 在列表、時間軸、月曆看到它 → 看統計的總覽、走勢、週期、警告頁籤 → 做成分享圖。"""
     ctx = browser.new_context(viewport=MOBILE, record_video_dir=args.video_dir, record_video_size=MOBILE, locale="zh-TW")
     login_and_seed(ctx)
     page = ctx.new_page()
@@ -146,6 +201,14 @@ def video(browser):
     scroll_to("#description", 120)
     page.type("#description", NEW["description"], delay=45)
     pause(500)
+    scroll_to("#category-input", 160)
+    page.type("#category-input", NEW["category"], delay=150)
+    pause(500)
+    page.keyboard.press("Enter")
+    pause(600)
+    scroll_to("#place-title")
+    page.type("#place", NEW["place"], delay=150)
+    pause(800)
     scroll_to("#save-btn", 300)
     page.click("#save-btn")
     page.wait_for_selector(".app-record")
@@ -162,13 +225,20 @@ def video(browser):
     # 統計
     page.goto(f"{BASE}/stats")
     page.wait_for_selector("#top-list li a")
+    pause(800)
+    page.check("input[name=range][value=year]", force=True)  # 今年：走勢逐月、警告有好幾個月可比
+    pause(1000)
     scroll_to("#overview-title")
+    pause(1500)
+    scroll_to("#top-title")
     pause(1500)
     for tab, title in (("trend", "#trend-title"), ("cycle", "#cycle-title"), ("alert", "#alert-title")):
         scroll_to("[data-tabs] .chips")
         page.click(f"[data-tab={tab}]")
         pause(600)
         scroll_to(title)
+        pause(1500)
+        page.evaluate("window.scrollBy({ top: 520, behavior: 'smooth' })")  # 清單比一個畫面長，往下帶一段
         pause(1500)
     # 分享
     page.goto(f"{BASE}/share?{SHARE_RANGE}")

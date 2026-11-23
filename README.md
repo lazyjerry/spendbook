@@ -8,9 +8,9 @@
 
 ## 畫面
 
-記下一筆大花費，接著在列表、月曆看到它，再看統計、做成分享圖：
+記下一筆大花費（含類別與地點），接著在列表、時間軸、月曆看到它；到統計選「今年」看總覽，再切到走勢、週期、警告頁籤，最後做成分享圖：
 
-![操作示範：新增一筆大花費、切換列表與月曆、看統計、做分享圖](docs/readme-media/demo.gif)
+![操作示範：新增一筆大花費並加上類別與地點、切換列表、時間軸與月曆、看統計的總覽、走勢、週期與警告頁籤、做分享圖](docs/readme-media/demo.gif)
 
 | 月曆（手機） | 分享圖：時間軸 | 分享圖：列表 |
 |---|---|---|
@@ -27,7 +27,7 @@
 | 適合 | 不適合 |
 |---|---|
 | 一筆就有感的花費：3C、家電、家具、機票住宿、保險、學費、紅包、修車 | 每天的三餐、飲料、交通 |
-| 想記住來龍去脈的事：為什麼買、在哪買、值不值得 | 需要分類、預算、收支結餘的記帳 |
+| 想記住來龍去脈的事：為什麼買、在哪買、值不值得 | 需要預算、收支結餘的記帳 |
 | 隔幾年還想翻出來看的事 | 多人分帳、對帳 |
 
 金額多大才算「大」由你自己決定，工具不設門檻。
@@ -36,8 +36,8 @@
 
 | 頁面 | 路徑 | 內容 |
 |---|---|---|
-| 紀錄 | `/` | 搜尋標題與描述（多個關鍵字以空白分隔）；五種檢視：列表、時間軸、月曆、週曆、日曆。月曆點日期進當天的日曆 |
-| 新增／修改 | `/edit`、`/edit?id=…` | 哪件事（標題）、幣別與金額、時間（預設現在，可改）、來龍去脈（描述，0–1024 字）、照片（選填，一筆一張）；修改頁可刪除 |
+| 紀錄 | `/` | 搜尋標題、描述、類別與地點（多個關鍵字以空白分隔）；五種檢視：列表、時間軸、月曆、週曆、日曆。月曆點日期進當天的日曆 |
+| 新增／修改 | `/edit`、`/edit?id=…` | 哪件事（標題）、幣別與金額、時間（預設現在，可改）、來龍去脈（描述，0–1024 字）、類別（選填，可多個，從用過的類別或預設建議挑）、地點（選填，地圖點選、查地址或用目前位置，存名稱與經緯度）、照片（選填，一筆一張）；修改頁可刪除 |
 | 統計 | `/stats` | 五個頁籤，日期範圍、幣別、關鍵字套用到每一頁。**總覽與搜尋**：總花費、筆數、平均與中位數、金額最大的 10 筆；**走勢**：大筆的錢落在哪幾天或哪幾個月、星期與時段分布；**週期**：標題相同的事平常隔多久發生一次，最近太密或太久沒發生就標出來；**警告**：比同一件事平常貴、遠高於平常大筆的紀錄，以及花得特別多的月份；**分享**：把統計做成摘要文字分享或複製，或帶著同樣的範圍去分享頁做圖 |
 | 分享 | `/share` | 選日期範圍（可加關鍵字），做成時間軸圖、列表圖或純文字；圖片帶 App 標誌，可用系統分享、下載或複製 |
 | 設定 | `/settings` | 稱呼、預設幣別、一週從哪天開始、照片長邊與 JPEG 品質；通行金鑰管理、密碼登入開關、修改帳號與密碼 |
@@ -46,6 +46,8 @@
 - **照片**：在瀏覽器縮到設定的長邊、轉成 JPEG 並移除 EXIF 後才上傳，原始檔不離開裝置。
 - **登入**：帳號密碼或通行金鑰（WebAuthn）。密碼以 PBKDF2-SHA256 雜湊保存；同一個來源 15 分鐘內密碼登入最多嘗試 10 次。
 - **時區**：時間以 UTC 保存，畫面依裝置時區顯示與分組。
+- **類別**：最多 10 個，每個 20 字內、不含空白。只用來整理與搜尋，不做類別預算。
+- **地點**：地圖用 [Leaflet](https://leafletjs.com/) 與 OpenStreetMap 圖磚；查座標、用座標查地址經由 Worker 轉送 OpenStreetMap Nominatim，結果快取 1 天。地點不填就不會查詢。
 - **多人**：資料表與照片都以帳號隔離，但目前只有一個帳號，沒有註冊畫面。
 
 ## 部署
@@ -94,7 +96,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 |---|---|
 | `npm run pages` | 由 `scripts/pages/` 重新產生 `public/*.html` |
 | `npm run icons` | 重新產生 PWA icon 與 favicon（需要 Pillow，macOS 字型） |
-| `npm run vendor` | 把 SimpleWebAuthn 前端複製到 `public/vendor/` |
+| `npm run vendor` | 把 SimpleWebAuthn 與 Leaflet 前端複製到 `public/vendor/` |
 | `npm run readme-media` | 用暫存資料庫與示範資料重拍 README 的截圖與操作影片（需要 Playwright、Pillow、ffmpeg）；影片先存成 `docs/readme-media/demo.mp4`（不進版控）再轉 `demo.gif` |
 | `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、頁面引用、PWA 檔案檢查 |
 | `npm test` | 上一項加 API 冒煙測試（自己起一個用暫存資料庫的 `wrangler dev`） |
@@ -108,10 +110,11 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `src/passkey.js` | 通行金鑰註冊、登入、刪除，密碼登入開關 |
 | `src/db.js` | 紀錄與設定的驗證與 D1 查詢 |
 | `src/media.js` | 照片上傳、讀取、刪除（R2） |
+| `src/geo.js` | 地點查詢與座標反查（轉送 OpenStreetMap Nominatim） |
 | `migrations/` | D1 資料表 |
 | `scripts/pages/`、`scripts/build_pages.py` | 各頁內文與頁面殼產生腳本 |
 | `public/` | 產出的頁面、樣式（`jerry-ui.css` 與 `app.css`）、各頁腳本（`js/`）、PWA 檔案 |
 
 ## 授權
 
-MIT，見 [LICENSE](LICENSE)。通行金鑰使用 [SimpleWebAuthn](https://github.com/MasterKale/SimpleWebAuthn)（MIT）。
+MIT，見 [LICENSE](LICENSE)。通行金鑰使用 [SimpleWebAuthn](https://github.com/MasterKale/SimpleWebAuthn)（MIT），地圖使用 [Leaflet](https://github.com/Leaflet/Leaflet)（BSD-2-Clause），地圖資料 © OpenStreetMap 貢獻者（ODbL）。

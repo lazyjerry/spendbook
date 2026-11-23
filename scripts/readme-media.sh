@@ -54,7 +54,8 @@ echo "轉檔影片"
 WEBM=$(ls "$STATE"/video/*.webm | head -1)
 MP4=docs/readme-media/demo.mp4
 ffmpeg -loglevel error -y -i "$WEBM" -c:v libx264 -preset slow -crf 20 -pix_fmt yuv420p -movflags +faststart -an "$MP4"
+# fps 8 加上只重畫變動區塊（diff_mode），統計頁籤那段加長後 GIF 仍壓在 10MB 以內
 ffmpeg -loglevel error -y -i "$MP4" \
-  -vf "fps=10,scale=360:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse=dither=bayer:bayer_scale=4" \
+  -vf "fps=8,scale=360:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle" \
   docs/readme-media/demo.gif
 ls -l docs/readme-media/
