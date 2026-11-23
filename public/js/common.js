@@ -26,8 +26,8 @@ export const DEFAULT_SETTINGS = { nickname: "", defaultCurrency: "TWD", weekStar
 export const APP_NAME = "花錢事件簿";
 export const $ = (sel, root = document) => root.querySelector(sel);
 
-export async function api(path, { method = "GET", json, body, headers = {} } = {}) {
-  const opts = { method, headers: { ...headers }, credentials: "same-origin" };
+export async function api(path, { method = "GET", json, body, headers = {}, keepalive = false } = {}) {
+  const opts = { method, headers: { ...headers }, credentials: "same-origin", keepalive };
   if (json !== undefined) {
     opts.body = JSON.stringify(json);
     opts.headers["Content-Type"] = "application/json";

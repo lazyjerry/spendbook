@@ -1,7 +1,7 @@
 <form class="app-form" id="settings-form" novalidate>
 <div class="card-grid"><section class="card accent-coral is-roomy" aria-labelledby="prefs-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">01</span>
-  <div><h2 id="prefs-title">偏好</h2><p>新增紀錄與月曆套用的預設值</p></div>
+  <div><h2 id="prefs-title">偏好</h2><p>新增紀錄與月曆套用的預設值；變更自動儲存</p></div>
 </div>
 <div class="stack"><div class="field">
   <label for="nickname">稱呼</label>
@@ -16,10 +16,11 @@
   <legend class="visually-hidden">一週的第一天</legend>
   <label><input type="radio" name="week-start" value="1" checked><span>週一開始</span></label>
   <label><input type="radio" name="week-start" value="0"><span>週日開始</span></label>
-</fieldset></div></section>
+</fieldset>
+<p class="status" id="prefs-status" role="status"></p></div></section>
 <section class="card accent-blue is-roomy" aria-labelledby="photo-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">02</span>
-  <div><h2 id="photo-title">照片壓縮</h2><p>上傳前的長邊尺寸與 JPEG 品質</p></div>
+  <div><h2 id="photo-title">照片壓縮</h2><p>上傳前的長邊尺寸與 JPEG 品質；變更自動儲存</p></div>
 </div>
 <div class="stack"><div class="field">
   <label for="max-edge">照片長邊</label>
@@ -31,8 +32,7 @@
   <input id="quality" type="range" min="60" max="95" step="5" value="80">
   <div class="scale"><span>60</span><span>95</span></div>
 </div>
-<button class="btn is-block" type="submit" id="save-btn">儲存偏好與照片設定<span class="btn-arrow" aria-hidden="true">→</span></button>
-<p class="status" id="settings-status" role="status"></p></div></section>
+<p class="status" id="photo-status" role="status"></p></div></section>
 <section class="card accent-violet is-roomy" aria-labelledby="passkey-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">03</span>
   <div><h2 id="passkey-title">通行金鑰</h2><p>用指紋、臉部或裝置密碼登入；變更立即生效</p></div>

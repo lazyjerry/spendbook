@@ -1,12 +1,13 @@
-// 設定頁：偏好與照片壓縮存在 /api/settings（D1，各裝置共用），按「儲存」才寫入；
+// 設定頁：偏好與照片壓縮存在 /api/settings（D1，各裝置共用），欄位一變更就自動寫入；
 // 通行金鑰、帳號、密碼直接打各自的 API，變更立即生效。
-import { $, CURRENCIES, api, bindLogout, esc, loadSettings, setStatus, toast } from "./common.js";
+import { $, CURRENCIES, api, bindLogout, esc, loadSettings, setStatus } from "./common.js";
 
 bindLogout();
 
 const form = $("#settings-form");
-const status = $("#settings-status");
-const saveBtn = $("#save-btn");
+const prefsStatus = $("#prefs-status");
+const photoStatus = $("#photo-status");
+const nickname = $("#nickname");
 const quality = $("#quality");
 
 $("#default-currency").innerHTML = CURRENCIES.map(([code, name]) => `<option value="${code}">${code}　${name}</option>`).join("");
@@ -32,25 +33,51 @@ function read() {
   };
 }
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  saveBtn.disabled = true;
-  setStatus(status, "儲存中…");
-  try {
-    const data = await api("/api/settings", { method: "PUT", json: read() });
-    fill({ ...data.settings });
-    setStatus(status, "已儲存", "ok");
-    toast("已儲存設定");
-  } catch (err) {
-    setStatus(status, err.message, "error");
-  } finally {
-    saveBtn.disabled = false;
-  }
+// 變更就自動儲存：請求排隊一次送一個，送出前跟上次存好的內容比對，沒變就不送。
+// 存好後不把伺服器回傳的值填回欄位，免得蓋掉請求途中又改的內容。
+let lastSaved = "";
+let queue = Promise.resolve();
+function save(statusEl) {
+  queue = queue.then(async () => {
+    const next = read();
+    const key = JSON.stringify(next);
+    if (key === lastSaved) return;
+    setStatus(statusEl, "儲存中…");
+    try {
+      // keepalive：點連結離開時 blur 觸發的這次儲存不會被換頁中斷
+      await api("/api/settings", { method: "PUT", json: next, keepalive: true });
+      lastSaved = key;
+      setStatus(statusEl, "已儲存", "ok");
+    } catch (err) {
+      setStatus(statusEl, err.message, "error");
+    }
+  });
+}
+
+form.addEventListener("submit", (e) => e.preventDefault());
+
+// 稱呼停止輸入一下就存；選單、切換、滑桿在 change 時存
+let nicknameTimer;
+nickname.addEventListener("input", () => {
+  clearTimeout(nicknameTimer);
+  nicknameTimer = setTimeout(() => save(prefsStatus), 500);
 });
+nickname.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.isComposing) return;
+  e.preventDefault();
+  nickname.blur();
+});
+for (const [card, statusEl] of [[$("#prefs-title").closest(".card"), prefsStatus], [$("#photo-title").closest(".card"), photoStatus]]) {
+  card.addEventListener("change", () => {
+    clearTimeout(nicknameTimer);
+    save(statusEl);
+  });
+}
 
 // 設定載回來之前先鎖住表單，免得先改的欄位被載入結果蓋掉
 form.inert = true;
 fill(await loadSettings());
+lastSaved = JSON.stringify(read());
 form.inert = false;
 
 // ---------- 通行金鑰 ----------
