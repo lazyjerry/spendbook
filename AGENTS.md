@@ -29,6 +29,7 @@
 - **機密**：`APP_PASSWORD` 用 `wrangler secret put`，本機放 `.dev.vars`。設定檔、程式碼、文件、log 只寫變數名稱。
 - **個人部署資訊不進版控**：實際的資料庫編號與自訂網域只寫在 `wrangler.local.jsonc`；進版控的 `wrangler.jsonc` 是給 Deploy Button 與本機測試用的通用設定。
 - **錯誤訊息**：一律繁體中文，說明哪裡錯、怎麼改；回給前端的錯誤不含堆疊。
+- **MCP 的 tool**：`src/rpc.js` 的 `SpendbookRpc` 依 MCP 閘道的服務契約提供 `describe()` 與 `call()`；tool 定義與驗證在 `src/tools.js`，新增與修改共用 `src/db.js` 的 `validateRecord`。資料操作不放成 class 的方法（會變成可直接呼叫的 RPC）。不開放刪除、照片、設定與帳號（`docs/afk-skill/adr/017`）。改 tool 先在 `scripts/test-tools.mjs` 加會失敗的檢查。
 
 ## 驗證
 

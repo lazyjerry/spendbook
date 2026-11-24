@@ -49,6 +49,7 @@
 - **類別**：最多 10 個，每個 20 字內、不含空白。只用來整理與搜尋，不做類別預算。
 - **地點**：地圖用 [Leaflet](https://leafletjs.com/) 與 OpenStreetMap 圖磚；查座標、用座標查地址經由 Worker 轉送 OpenStreetMap Nominatim，結果快取 1 天。地點不填就不會查詢。
 - **多人**：資料表與照片都以帳號隔離，但目前只有一個帳號，沒有註冊畫面。
+- **MCP**：提供 RPC entrypoint `SpendbookRpc` 給同一個 Cloudflare 帳號裡的 MCP 閘道，讓 AI client 查詢、新增、修改紀錄；見〈接上 MCP 閘道〉。
 
 ## 部署
 
@@ -81,6 +82,19 @@ npx wrangler d1 execute DB --remote --command "UPDATE users SET password_hash = 
 npx wrangler d1 execute DB --remote --command "UPDATE auth_config SET password_login = 1 WHERE id = 1"
 ```
 
+### 接上 MCP 閘道
+
+`src/rpc.js` 的 `SpendbookRpc` 依 MCP 閘道的服務契約提供 `describe()` 與 `call()`，閘道以服務綁定呼叫，沒有公開網址。操作的是唯一的帳號（帳號 1）。
+
+| 授權範圍 | 預設勾選 | tool |
+|---|---|---|
+| `spendbook:read` | 是 | `spendbook_search`（關鍵字、時間範圍、分頁）、`spendbook_get`、`spendbook_categories` |
+| `spendbook:write` | 否 | `spendbook_add`、`spendbook_update`（只改有給的欄位） |
+
+不開放刪除、照片、設定、帳號與通行金鑰。新增與修改走和 REST 同一支 `validateRecord`。
+
+閘道端（服務先部署，閘道後接）：`wrangler.local.jsonc` 的 `services` 加 `{ "binding": "SPENDBOOK", "service": "spendbook", "entrypoint": "SpendbookRpc" }`，secret `SERVICES` 加上 `SPENDBOOK` 後部署閘道；已授權的 client 要撤銷後重新授權才拿得到新範圍。
+
 ## 本機開發
 
 ```bash
@@ -98,7 +112,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `npm run icons` | 重新產生 PWA icon 與 favicon（需要 Pillow，macOS 字型） |
 | `npm run vendor` | 把 SimpleWebAuthn 與 Leaflet 前端複製到 `public/vendor/` |
 | `npm run readme-media` | 用暫存資料庫與示範資料重拍 README 的截圖與操作影片（需要 Playwright、Pillow、ffmpeg）；影片先存成 `docs/readme-media/demo.mp4`（不進版控）再轉 `demo.gif` |
-| `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、頁面引用、PWA 檔案檢查 |
+| `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、統計與 MCP tool 的單元測試、頁面引用、PWA 檔案檢查 |
 | `npm test` | 上一項加 API 冒煙測試（自己起一個用暫存資料庫的 `wrangler dev`） |
 
 ## 專案結構
@@ -111,6 +125,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `src/db.js` | 紀錄與設定的驗證與 D1 查詢 |
 | `src/media.js` | 照片上傳、讀取、刪除（R2） |
 | `src/geo.js` | 地點查詢與座標反查（轉送 OpenStreetMap Nominatim） |
+| `src/rpc.js`、`src/tools.js` | MCP 閘道用的 RPC entrypoint；tool 定義、參數驗證與分派 |
 | `migrations/` | D1 資料表 |
 | `scripts/pages/`、`scripts/build_pages.py` | 各頁內文與頁面殼產生腳本 |
 | `public/` | 產出的頁面、樣式（`jerry-ui.css` 與 `app.css`）、各頁腳本（`js/`）、PWA 檔案 |
