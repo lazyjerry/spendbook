@@ -7,6 +7,8 @@ import { geoReverse, geoSearch } from "./geo.js";
 import * as media from "./media.js";
 import * as passkey from "./passkey.js";
 
+export { SpendbookRpc } from "./rpc.js";
+
 const PUBLIC_PATHS = new Set(["/login", "/login.html", "/jerry-ui.css", "/jerry-ui.js", "/app.css", "/jerry.png", "/js/login.js", "/js/common.js", "/favicon.ico", "/vendor/simplewebauthn/browser.umd.min.js",
   // PWA：manifest 預設不帶 cookie 抓取；sw.js、離線頁與 icon 在登入頁就要拿得到
   "/manifest.webmanifest", "/sw.js", "/js/pwa.js", "/offline", "/offline.html",
