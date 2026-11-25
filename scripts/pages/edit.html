@@ -12,7 +12,36 @@
   <select id="currency"></select>
 </div><div class="field">
   <label for="amount">金額</label>
+  <div class="app-calc-wrap">
+  <div class="input-group">
   <input id="amount" class="num" type="text" inputmode="decimal" autocomplete="off" placeholder="0" aria-describedby="amount-hint" required>
+  <button type="button" id="calc-btn" aria-expanded="false" aria-controls="calc">計算機</button>
+</div>
+  <div class="app-calc" id="calc" role="group" aria-label="計算機：按「=」算出結果，按「送出」填進金額" tabindex="-1" hidden>
+  <div class="app-calc-screen" aria-live="polite"><span class="app-calc-expr" data-calc-expr></span><strong class="app-calc-value" data-calc-value>0</strong></div>
+  <div class="app-calc-keys">
+  <button class="btn secondary app-calc-key app-calc-fn" type="button" data-key="C" aria-label="全部清除">C</button>
+  <button class="btn secondary app-calc-key app-calc-fn" type="button" data-key="back" aria-label="刪除一個字">⌫</button>
+  <button class="btn secondary app-calc-key app-calc-op" type="button" data-key="/" aria-label="除">÷</button>
+  <button class="btn secondary app-calc-key app-calc-op" type="button" data-key="*" aria-label="乘">×</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="7">7</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="8">8</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="9">9</button>
+  <button class="btn secondary app-calc-key app-calc-op" type="button" data-key="-" aria-label="減">−</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="4">4</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="5">5</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="6">6</button>
+  <button class="btn secondary app-calc-key app-calc-op" type="button" data-key="+" aria-label="加">+</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="1">1</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="2">2</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="3">3</button>
+  <button class="btn secondary app-calc-key app-calc-op" type="button" data-key="=" aria-label="等於，算出結果">=</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="0">0</button>
+  <button class="btn secondary app-calc-key" type="button" data-key="." aria-label="小數點">.</button>
+  <button class="btn app-calc-key app-calc-submit" type="button" data-key="submit">送出</button>
+</div>
+</div>
+</div>
   <p class="hint" id="amount-hint"></p>
 </div></div>
 <div class="field">
@@ -62,15 +91,12 @@
 <p class="status" id="geo-status" role="status"></p></div></section>
 <section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">03</span>
-  <div><h2 id="photo-title">照片（選填）</h2><p>收據或實物一張；上傳前在裝置上壓縮</p></div>
+  <div><h2 id="photo-title">照片（選填）</h2><p>收據或實物，最多 10 張；上傳前在裝置上壓縮</p></div>
 </div>
 <div class="stack"><div class="actions"><button class="btn" type="button" id="camera-btn">拍照</button><button class="btn secondary" type="button" id="pick-btn">從相簿選擇</button></div>
 <input class="app-file" id="camera-input" type="file" accept="image/*" capture="environment" aria-label="拍照" hidden>
-<input class="app-file" id="pick-input" type="file" accept="image/*" aria-label="從相簿選擇照片" hidden>
-<figure class="app-photo" id="photo-preview" hidden>
-  <img id="photo-img" alt="這筆紀錄的照片">
-  <figcaption><span id="photo-info"></span><button class="btn is-sm secondary" type="button" id="photo-remove-btn">移除照片</button></figcaption>
-</figure>
+<input class="app-file" id="pick-input" type="file" accept="image/*" multiple aria-label="從相簿選擇照片，可一次選多張" hidden>
+<ul class="app-photo-list" id="photo-list" aria-label="這筆紀錄的照片"></ul>
 <p class="status" id="photo-status" role="status"></p></div></section>
 <section class="card accent-coral is-roomy is-wide" aria-labelledby="save-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">04</span>

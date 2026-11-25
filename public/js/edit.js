@@ -1,6 +1,7 @@
 // 新增／修改紀錄：/edit 是新增，/edit?id=<編號> 是修改；/edit?date=YYYY-MM-DD 帶入指定日期（時間用現在）。
-// 儲存順序：先存紀錄，再處理照片（上傳新的或移除舊的）。照片在裝置上壓成 JPEG 才上傳。
+// 儲存順序：先存紀錄，再處理照片（先移除、再逐張上傳新的）。照片在裝置上壓成 JPEG 才上傳，一筆最多 MAX_PHOTOS 張。
 import { $, CURRENCIES, amountInputValue, api, bindLogout, charCount, currencyInfo, esc, loadSettings, localInputValue, mediaUrl, parseYmd, setFlash, setStatus, showFlash } from "./common.js";
+import { attachCalculator } from "./calc.js";
 import { createMap } from "./map.js";
 import { compressImage } from "./photo.js";
 import { tagSuggest } from "./tag-suggest.js";
@@ -18,17 +19,15 @@ const descHint = $("#description-hint");
 const saveBtn = $("#save-btn");
 const saveStatus = $("#save-status");
 const deleteBtn = $("#delete-btn");
-const photoPreview = $("#photo-preview");
-const photoImg = $("#photo-img");
-const photoInfo = $("#photo-info");
+const photoList = $("#photo-list");
 const photoStatus = $("#photo-status");
 
 const params = new URLSearchParams(location.search);
 const id = Number(params.get("id")) || 0;
 let settings = null;
-let existingPhotoKey = null; // 伺服器上目前的照片
-let pendingPhoto = null; // 剛選、還沒上傳的照片 { blob, width, height, url }
-let removeExisting = false;
+let existingPhotos = []; // 伺服器上目前的照片 [{ id, key, width, height }]
+let pendingPhotos = []; // 剛選、還沒上傳的照片 [{ blob, width, height, url }]
+const removedPhotoIds = new Set(); // 要在儲存時移除的已上傳照片
 let dirty = false;
 
 currency.innerHTML = CURRENCIES.map(([code, name]) => `<option value="${code}">${code}　${name}</option>`).join("");
@@ -51,53 +50,101 @@ form.addEventListener("input", () => {
   dirty = true;
 });
 
-// ---------- 照片 ----------
-function showPhoto() {
-  if (pendingPhoto) {
-    photoImg.src = pendingPhoto.url;
-    photoInfo.textContent = `${pendingPhoto.width}×${pendingPhoto.height}，${Math.round(pendingPhoto.blob.size / 1024)} KB，儲存時上傳`;
-    photoPreview.hidden = false;
-  } else if (existingPhotoKey && !removeExisting) {
-    photoImg.src = mediaUrl(existingPhotoKey);
-    photoInfo.textContent = "已上傳";
-    photoPreview.hidden = false;
-  } else {
-    photoImg.removeAttribute("src");
-    photoPreview.hidden = true;
-  }
+// ---------- 金額計算機 ----------
+attachCalculator({
+  input: amount,
+  toggle: $("#calc-btn"),
+  panel: $("#calc"),
+  decimals: () => currencyInfo(currency.value).decimals,
+  onSubmit(minor) {
+    amount.value = amountInputValue(minor, currency.value);
+    markInvalid(amount, false);
+    dirty = true;
+  },
+});
+
+// ---------- 照片（可多張，見 docs/afk-skill/adr/020） ----------
+const MAX_PHOTOS = 10; // 與 src/db.js 相同
+const keptPhotos = () => existingPhotos.filter((p) => !removedPhotoIds.has(p.id));
+const photoCount = () => keptPhotos().length + pendingPhotos.length;
+
+function showPhotos() {
+  const item = (src, info, attrs) => `<li class="app-photo"><a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="" loading="lazy"></a>
+  <div class="app-photo-bar"><span>${esc(info)}</span><button class="btn is-sm secondary" type="button" ${attrs}>移除</button></div></li>`;
+  photoList.innerHTML = [
+    ...keptPhotos().map((p, i) => item(mediaUrl(p.key), `第 ${i + 1} 張`, `data-photo-id="${p.id}" aria-label="移除第 ${i + 1} 張照片"`)),
+    ...pendingPhotos.map((p, i) => item(p.url, `${Math.round(p.blob.size / 1024)} KB，儲存時上傳`, `data-pending="${i}" aria-label="移除剛選的照片 ${i + 1}"`)),
+  ].join("");
+  const full = photoCount() >= MAX_PHOTOS;
+  $("#camera-btn").disabled = full;
+  $("#pick-btn").disabled = full;
 }
 
-async function pickPhoto(input) {
-  const file = input.files?.[0];
+function photoNote() {
+  const parts = [];
+  if (pendingPhotos.length) parts.push(`${pendingPhotos.length} 張新照片`);
+  if (removedPhotoIds.size) parts.push(`移除 ${removedPhotoIds.size} 張`);
+  const note = parts.length ? `儲存後才會${parts.join("、")}` : "";
+  return photoCount() >= MAX_PHOTOS ? `${note ? note + "；" : ""}已達 ${MAX_PHOTOS} 張上限` : note;
+}
+
+async function pickPhotos(input) {
+  const files = [...(input.files || [])];
   input.value = "";
-  if (!file) return;
-  setStatus(photoStatus, "壓縮中…");
-  try {
-    const out = await compressImage(file, { maxEdge: settings.maxEdge, quality: settings.quality });
-    if (pendingPhoto) URL.revokeObjectURL(pendingPhoto.url);
-    pendingPhoto = { ...out, url: URL.createObjectURL(out.blob) };
-    dirty = true;
-    showPhoto();
-    setStatus(photoStatus, existingPhotoKey ? "儲存後會換掉原本的照片" : "");
-  } catch (err) {
-    setStatus(photoStatus, err.message, "error");
+  if (!files.length) return;
+  const room = MAX_PHOTOS - photoCount();
+  const take = files.slice(0, Math.max(room, 0));
+  const errors = [];
+  for (const [i, file] of take.entries()) {
+    setStatus(photoStatus, take.length > 1 ? `壓縮中 ${i + 1}／${take.length}…` : "壓縮中…");
+    try {
+      const out = await compressImage(file, { maxEdge: settings.maxEdge, quality: settings.quality });
+      pendingPhotos.push({ ...out, url: URL.createObjectURL(out.blob) });
+      dirty = true;
+      showPhotos();
+    } catch (err) {
+      errors.push(err.message);
+    }
   }
+  if (files.length > take.length) errors.push(`一筆最多 ${MAX_PHOTOS} 張，多選的 ${files.length - take.length} 張沒有加入`);
+  setStatus(photoStatus, errors.length ? errors.join("；") : photoNote(), errors.length ? "error" : "");
 }
 $("#camera-btn").addEventListener("click", () => $("#camera-input").click());
 $("#pick-btn").addEventListener("click", () => $("#pick-input").click());
-$("#camera-input").addEventListener("change", (e) => pickPhoto(e.target));
-$("#pick-input").addEventListener("change", (e) => pickPhoto(e.target));
-$("#photo-remove-btn").addEventListener("click", () => {
-  if (pendingPhoto) {
-    URL.revokeObjectURL(pendingPhoto.url);
-    pendingPhoto = null;
-  } else if (existingPhotoKey) {
-    removeExisting = true;
+$("#camera-input").addEventListener("change", (e) => pickPhotos(e.target));
+$("#pick-input").addEventListener("change", (e) => pickPhotos(e.target));
+photoList.addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  if (btn.dataset.pending !== undefined) {
+    const [p] = pendingPhotos.splice(Number(btn.dataset.pending), 1);
+    URL.revokeObjectURL(p.url);
+  } else {
+    removedPhotoIds.add(Number(btn.dataset.photoId));
   }
   dirty = true;
-  showPhoto();
-  setStatus(photoStatus, removeExisting ? "儲存後會移除照片" : "");
+  showPhotos();
+  setStatus(photoStatus, photoNote());
 });
+
+// 照片的增刪逐張送出；每成功一張就更新狀態，失敗後再按儲存只重做剩下的
+async function syncPhotos(recordId) {
+  for (const photoId of [...removedPhotoIds]) {
+    setStatus(saveStatus, "移除照片中…");
+    const data = await api(`/api/records/${recordId}/photos/${photoId}`, { method: "DELETE" });
+    removedPhotoIds.delete(photoId);
+    existingPhotos = data.record.photos;
+  }
+  const total = pendingPhotos.length;
+  while (pendingPhotos.length) {
+    const p = pendingPhotos[0];
+    setStatus(saveStatus, total > 1 ? `上傳照片中 ${total - pendingPhotos.length + 1}／${total}…` : "上傳照片中…");
+    const data = await api(`/api/records/${recordId}/photos?w=${p.width}&h=${p.height}`, { method: "POST", body: p.blob, headers: { "Content-Type": "image/jpeg" } });
+    pendingPhotos.shift();
+    URL.revokeObjectURL(p.url);
+    existingPhotos = data.record.photos;
+  }
+}
 
 // ---------- 類別（選填，可多個；見 docs/afk-skill/adr/014） ----------
 // 建議清單 = 這個帳號用過的類別（依次數）加上預設建議；預設只是建議，不必照用
@@ -375,14 +422,9 @@ form.addEventListener("submit", async (e) => {
     focusField(err.fields);
     return;
   }
-  // 紀錄已存好；照片失敗時留在這筆的修改頁，再按一次儲存就會重傳
+  // 紀錄已存好；照片失敗時留在這筆的修改頁，再按一次儲存就會重傳剩下的
   try {
-    if (pendingPhoto) {
-      setStatus(saveStatus, "上傳照片中…");
-      await api(`/api/records/${savedId}/photo?w=${pendingPhoto.width}&h=${pendingPhoto.height}`, { method: "PUT", body: pendingPhoto.blob, headers: { "Content-Type": "image/jpeg" } });
-    } else if (removeExisting) {
-      await api(`/api/records/${savedId}/photo`, { method: "DELETE" });
-    }
+    await syncPhotos(savedId);
   } catch (err) {
     dirty = false;
     if (!id) {
@@ -392,6 +434,8 @@ form.addEventListener("submit", async (e) => {
     }
     saveBtn.disabled = false;
     form.inert = false;
+    dirty = true; // 還有沒處理完的照片，離開前要提醒
+    showPhotos();
     setStatus(saveStatus, `紀錄已儲存，但照片沒處理好：${err.message}。再按一次儲存重試`, "error");
     return;
   }
@@ -442,7 +486,7 @@ try {
     amount.value = amountInputValue(record.amountMinor, record.currency);
     occurredAt.value = localInputValue(new Date(record.occurredAt));
     description.value = record.description;
-    existingPhotoKey = record.photoKey;
+    existingPhotos = record.photos;
     categories = [...record.categories];
     place.value = record.place;
     if (record.lat != null && record.lng != null) {
@@ -463,7 +507,7 @@ try {
   }
   updateAmountHint();
   updateDescHint();
-  showPhoto();
+  showPhotos();
   renderCategories();
   form.inert = false;
   initMap(mapStart); // 不等地圖：地圖元件載入失敗也不影響其他欄位

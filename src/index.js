@@ -62,26 +62,21 @@ async function api(request, env, url, ctx) {
       return json({ ok: true });
     }
   }
-  if ((m = pathname.match(/^\/api\/records\/(\d+)\/photo$/))) {
+  if ((m = pathname.match(/^\/api\/records\/(\d+)\/photos$/)) && method === "POST") {
     const id = parseId(m[1]);
-    if (method === "PUT") {
-      await db.getRecord(env.DB, user.id, id); // 先確認紀錄存在，再寫 R2
-      const photo = await media.storePhoto(request, env, user.id, url);
-      let result;
-      try {
-        result = await db.setPhoto(env.DB, user.id, id, photo);
-      } catch (err) {
-        await media.removePhoto(env, photo.key); // 紀錄寫不進去：收掉剛寫的檔
-        throw err;
-      }
-      await media.removePhoto(env, result.oldKey);
-      return json({ record: result.record });
+    await db.checkPhotoSlot(env.DB, user.id, id); // 先確認紀錄存在、還沒滿，再寫 R2
+    const photo = await media.storePhoto(request, env, user.id, url);
+    try {
+      return json({ record: await db.addPhoto(env.DB, user.id, id, photo) }, 201);
+    } catch (err) {
+      await media.removePhoto(env, photo.key); // 紀錄寫不進去：收掉剛寫的檔
+      throw err;
     }
-    if (method === "DELETE") {
-      const result = await db.setPhoto(env.DB, user.id, id, null);
-      await media.removePhoto(env, result.oldKey);
-      return json({ record: result.record });
-    }
+  }
+  if ((m = pathname.match(/^\/api\/records\/(\d+)\/photos\/(\d+)$/)) && method === "DELETE") {
+    const result = await db.removePhoto(env.DB, user.id, parseId(m[1]), parseId(m[2]));
+    await media.removePhoto(env, result.key);
+    return json({ record: result.record });
   }
   if (pathname === "/api/categories" && method === "GET") return json({ categories: await db.listCategories(env.DB, user.id) });
   if (pathname === "/api/geo/search" && method === "GET") return geoSearch(url, ctx);

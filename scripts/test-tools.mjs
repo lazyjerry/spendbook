@@ -23,7 +23,7 @@ function fakeOps() {
     get: async (id) => ({ ...find(id) }),
     categories: async () => [{ name: "旅行", count: 1 }],
     create: async (r) => {
-      const row = { id: rows.length + 1, ...r, photoKey: null };
+      const row = { id: rows.length + 1, ...r, photos: [] };
       rows.push(row);
       return { ...row };
     },

@@ -102,7 +102,7 @@ DETAILS = {
     "沙發": (["家具"], "", None, None),
 }
 # 影片裡現場新增的那一筆（地點只打名稱、不按查座標，錄影不打 OpenStreetMap）
-NEW = {"title": "換筆電", "amount": "58900", "description": "舊機電池膨脹，這次選 16 吋，刷卡分三期。", "category": "3C", "place": "光華商場"}
+NEW = {"title": "換筆電", "calc": "52900+6000", "description": "舊機電池膨脹，這次選 16 吋，刷卡分三期。", "category": "3C", "place": "光華商場"}
 MOBILE = {"width": 390, "height": 844}
 # 分享頁預設「本週」，週一拍會是空的；改用網址參數固定成近 30 天
 _today = datetime.date.today()
@@ -132,7 +132,7 @@ def login_and_seed(ctx):
         if photo:
             buf = io.BytesIO()
             Image.new("RGB", (640, 480), tuple(rng.randint(90, 230) for _ in range(3))).save(buf, "JPEG")
-            must(ctx.request.put(f"{BASE}/api/records/{rid}/photo?w=640&h=480", data=buf.getvalue(), headers={"Content-Type": "image/jpeg"}), "上傳照片")
+            must(ctx.request.post(f"{BASE}/api/records/{rid}/photos?w=640&h=480", data=buf.getvalue(), headers={"Content-Type": "image/jpeg"}), "上傳照片")
 
 
 def screenshots(browser):
@@ -197,7 +197,16 @@ def video(browser):
     page.wait_for_selector("#title")
     scroll_to("#basic-title")
     page.type("#title", NEW["title"], delay=120)
-    page.type("#amount", NEW["amount"], delay=90)
+    # 金額用計算機算：筆電加保固，按 = 看結果，再按送出填進金額
+    page.click("#calc-btn")
+    pause(500)
+    for k in NEW["calc"]:
+        page.click(f'#calc [data-key="{k}"]')
+        page.wait_for_timeout(160)
+    page.click('#calc [data-key="="]')
+    pause(900)
+    page.click('#calc [data-key="submit"]')
+    pause(600)
     scroll_to("#description", 120)
     page.type("#description", NEW["description"], delay=45)
     pause(500)

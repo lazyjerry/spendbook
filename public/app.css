@@ -80,11 +80,13 @@
 .app-week-items time { color: var(--ink-2); font-family: var(--mono); }
 .app-week-items strong { font-family: var(--mono); }
 
-/* 編輯頁照片 */
-.app-photo { display: grid; gap: var(--space-2); margin: 0; }
-.app-photo[hidden] { display: none; }
-.app-photo img { display: block; width: 100%; max-height: 420px; height: auto; object-fit: contain; background: var(--paper); border: var(--line); }
-.app-photo figcaption { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2); color: var(--ink-2); font-size: var(--fs-sm); }
+/* 編輯頁照片：多張排成格線，點縮圖開原圖，每張一顆移除鈕 */
+.app-photo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.app-photo-list:empty { display: none; }
+.app-photo { display: grid; gap: var(--space-2); align-content: start; min-width: 0; margin: 0; }
+.app-photo a { display: block; }
+.app-photo img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; background: var(--paper); border: var(--line); }
+.app-photo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-2); color: var(--ink-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
 
 /* 統計 */
 .app-chart { min-width: 0; }
@@ -186,3 +188,23 @@
 @media (max-width: 760px) {
   .app-map { height: 280px; }
 }
+
+/* 金額計算機（編輯頁）：浮在金額欄下方，不推動版面；「=」只在計算機裡算，「送出」才填回金額 */
+.app-calc-wrap { position: relative; min-width: 0; }
+.app-calc { position: absolute; top: calc(100% + var(--space-2)); right: 0; z-index: 800; display: grid; gap: var(--space-2); width: max(100%, 272px); padding: var(--space-3); background: var(--card); border: var(--line); box-shadow: var(--shadow-sm); }
+.app-calc[hidden] { display: none; }
+.app-calc:focus { outline: 0; }
+.app-calc:focus-visible { outline: var(--focus); outline-offset: 2px; }
+.app-calc-screen { display: grid; justify-items: end; gap: var(--space-1); padding: var(--space-2) var(--space-3); background: var(--white); border: var(--line); font-family: var(--mono); text-align: right; overflow-wrap: anywhere; }
+.app-calc-expr { min-height: calc(var(--fs-sm) * var(--lh-snug)); color: var(--ink-2); font-size: var(--fs-sm); line-height: var(--lh-snug); }
+.app-calc-value { min-height: calc(var(--fs-xl) * var(--lh-tight)); color: var(--ink); font-size: var(--fs-xl); font-weight: var(--fw-heavy); line-height: var(--lh-tight); }
+.app-calc-value.app-is-error { color: var(--danger-ink); font-size: var(--fs-sm); }
+.app-calc-keys { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); }
+.app-calc-key { min-width: 0; padding-inline: 0; font-family: var(--mono); font-size: var(--fs-lg); }
+.app-calc-key.app-calc-op { color: var(--coral-ink); }
+.app-calc-key.app-calc-fn { color: var(--ink-2); }
+.app-calc-submit { grid-column: span 2; font-family: var(--font); font-size: var(--fs-md); }
+
+/* 紀錄卡片的照片張數（多張時標在縮圖右下角） */
+.app-record-cover, .app-tl-photo { position: relative; }
+.app-photo-count { position: absolute; right: var(--space-1); bottom: var(--space-1); padding: 0 var(--space-1); color: var(--white); background: var(--ink); font: var(--fw-heavy) var(--fs-2xs)/var(--lh-snug) var(--mono); }

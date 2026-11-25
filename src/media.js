@@ -1,4 +1,4 @@
-// 照片檔（R2）：key 是 u<帳號編號>/<uuid>.jpg，一筆紀錄最多一張，不跨紀錄共用。
+// 照片檔（R2）：key 是 u<帳號編號>/<uuid>.jpg，一筆紀錄可以有多張（src/db.js 的 MAX_PHOTOS），不跨紀錄共用。
 // 只收瀏覽器壓縮後的 JPEG；讀取時確認 key 屬於登入的帳號。
 import { HttpError } from "./http.js";
 
@@ -27,9 +27,9 @@ export async function storePhoto(request, env, userId, url) {
   return { key, width: dim("w"), height: dim("h") };
 }
 
-// 刪 R2 檔；失敗只記 log（紀錄已經不引用它，留下的是孤兒檔，不影響使用）
+// 刪 R2 檔（一個 key 或 key 陣列）；失敗只記 log（紀錄已經不引用它，留下的是孤兒檔，不影響使用）
 export async function removePhoto(env, key) {
-  if (!key) return;
+  if (!key || (Array.isArray(key) && !key.length)) return;
   try {
     await env.PHOTOS.delete(key);
   } catch (err) {

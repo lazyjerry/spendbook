@@ -109,16 +109,28 @@ expect "座標反查格式錯誤回 400" 400 "$(req GET '/api/geo/reverse?lat=ab
 
 # 1x1 JPEG
 node -e 'require("fs").writeFileSync(process.argv[1],Buffer.from("/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAMCAgICAgMCAgIDAwMDBAYEBAQEBAgGBgUGCQgKCgkICQkKDA8MCgsOCwkJDRENDg8QEBEQCgwSExIQEw8QEBD/yQALCAABAAEBAREA/8wABgAQEAX/2gAIAQEAAD8A0s8g/9k=","base64"))' "$tmp/p.jpg"
-code=$(curl -s -o "$tmp/body" -w '%{http_code}' -b "$jar" -X PUT -H 'Content-Type: image/jpeg' --data-binary "@$tmp/p.jpg" "$BASE/api/records/$id1/photo?w=1&h=1")
-expect "上傳照片" 200 "$code"
-key=$(field record.photoKey)
+upload() { curl -s -o "$tmp/body" -w '%{http_code}' -b "$jar" -X POST -H "Content-Type: ${2:-image/jpeg}" --data-binary "@$tmp/p.jpg" "$BASE/api/records/$1/photos?w=1&h=1"; }
+expect "上傳第一張照片" 201 "$(upload "$id1")"
+key=$(field record.photos.0.key)
+expect "上傳第二張照片" 201 "$(upload "$id1")"
+[ "$(field record.photos.length)" = "2" ] && [ "$(field record.photos.0.key)" = "$key" ] && ok "兩張照片依上傳順序" || ng "照片清單" "$(head -c 300 "$tmp/body")"
+photo2=$(field record.photos.1.id)
+key2=$(field record.photos.1.key)
+photo1=$(field record.photos.0.id)
+expect "列表帶照片清單" 200 "$(req GET "/api/records?limit=200")"
+node -e 'const d=JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));process.exit(d.records.some(r=>r.id===Number(process.argv[2])&&r.photos.length===2)?0:1)' "$tmp/body" "$id1" && ok "列表的紀錄有兩張照片" || ng "列表的照片" "$(head -c 300 "$tmp/body")"
 expect "讀照片" 200 "$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$BASE/media/$key")"
 expect "未登入讀不到照片" 401 "$(curl -s -o /dev/null -w '%{http_code}' "$BASE/media/$key")"
 expect "別的帳號的照片 key 回 404" 404 "$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$BASE/media/u999/00000000-0000-0000-0000-000000000000.jpg")"
-code=$(curl -s -o "$tmp/body" -w '%{http_code}' -b "$jar" -X PUT -H 'Content-Type: image/png' --data-binary "@$tmp/p.jpg" "$BASE/api/records/$id1/photo")
-expect "非 JPEG 回 415" 415 "$code"
-expect "移除照片" 200 "$(req DELETE "/api/records/$id1/photo")"
-expect "移除後照片讀不到" 404 "$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$BASE/media/$key")"
+expect "非 JPEG 回 415" 415 "$(upload "$id1" image/png)"
+expect "不存在的紀錄上傳照片回 404" 404 "$(upload 999999)"
+for _ in 3 4 5 6 7 8 9 10; do upload "$id1" > /dev/null; done
+expect "超過 10 張回 409" 409 "$(upload "$id1")"
+expect "移除第二張照片" 200 "$(req DELETE "/api/records/$id1/photos/$photo2")"
+[ "$(field record.photos.length)" = "9" ] && [ "$(field record.photos.0.key)" = "$key" ] && ok "移除後剩下其他照片" || ng "移除後的照片清單" "$(head -c 300 "$tmp/body")"
+expect "移除後那張讀不到" 404 "$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$BASE/media/$key2")"
+expect "再移除同一張回 404" 404 "$(req DELETE "/api/records/$id1/photos/$photo2")"
+expect "別筆紀錄的路徑移除不了照片" 404 "$(req DELETE "/api/records/$id2/photos/$photo1")"
 
 expect "存設定" 200 "$(req PUT /api/settings '{"nickname":"測試","defaultCurrency":"JPY","weekStart":0,"maxEdge":1280,"quality":70}')"
 expect "讀設定" 200 "$(req GET /api/settings)"
@@ -128,6 +140,7 @@ expect "還原設定" 200 "$(req PUT /api/settings '{}')"
 expect "刪除第一筆" 200 "$(req DELETE "/api/records/$id1")"
 expect "刪除第二筆" 200 "$(req DELETE "/api/records/$id2")"
 expect "刪除後讀不到" 404 "$(req GET "/api/records/$id1")"
+expect "刪除紀錄後照片一併刪除" 404 "$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$BASE/media/$key")"
 # 改帳號與密碼會動到真的帳號，只在自己起的暫存站台上測
 if [ -n "$dev_pid" ]; then
   [ "$(req GET /api/account >/dev/null; field initialPassword)" = "true" ] && ok "還沒改密碼前帳號帶初始密碼旗標" || ng "帳號的初始密碼旗標" "$(head -c 200 "$tmp/body")"

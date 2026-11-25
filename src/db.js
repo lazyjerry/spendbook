@@ -102,6 +102,20 @@ export function validateRecord(body) {
   return { title, currency, amountMinor, description, occurredAt, categories: categories.list, place, lat: round6(lat), lng: round6(lng) };
 }
 
+// 照片清單（photos 資料表，依上傳順序）由子查詢組成 JSON 陣列，一次查回；RETURNING * 的列沒有這欄，當成沒有照片
+export const MAX_PHOTOS = 10;
+const WITH_PHOTOS = `records.*, (SELECT json_group_array(json_object('id', p.id, 'key', p.object_key, 'width', p.width, 'height', p.height))
+  FROM (SELECT id, object_key, width, height FROM photos WHERE record_id = records.id AND user_id = records.user_id ORDER BY id) p) AS photos`;
+
+function parsePhotos(text) {
+  try {
+    const v = JSON.parse(text || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
 function toRecord(row) {
   return {
     id: row.id,
@@ -114,9 +128,7 @@ function toRecord(row) {
     place: row.place || "",
     lat: row.lat ?? null,
     lng: row.lng ?? null,
-    photoKey: row.photo_key,
-    photoWidth: row.photo_width,
-    photoHeight: row.photo_height,
+    photos: parsePhotos(row.photos),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -156,7 +168,7 @@ export async function listRecords(db, userId, { q = "", from = "", to = "", limi
     binds.push(cursor.at, cursor.at, cursor.id);
   }
   const { results } = await db
-    .prepare(`SELECT * FROM records WHERE ${where.join(" AND ")} ORDER BY occurred_at DESC, id DESC LIMIT ?`)
+    .prepare(`SELECT ${WITH_PHOTOS} FROM records WHERE ${where.join(" AND ")} ORDER BY occurred_at DESC, id DESC LIMIT ?`)
     .bind(...binds, limit + 1)
     .all();
   const page = results.slice(0, limit);
@@ -165,7 +177,7 @@ export async function listRecords(db, userId, { q = "", from = "", to = "", limi
 }
 
 async function rowById(db, userId, id) {
-  const row = await db.prepare("SELECT * FROM records WHERE id = ? AND user_id = ?").bind(id, userId).first();
+  const row = await db.prepare(`SELECT ${WITH_PHOTOS} FROM records WHERE id = ? AND user_id = ?`).bind(id, userId).first();
   if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
   return row;
 }
@@ -183,31 +195,63 @@ export async function createRecord(db, userId, r) {
   return toRecord(row);
 }
 
+// 更新後連同照片清單一起查回（同一個 batch）
 export async function updateRecord(db, userId, id, r) {
-  const row = await db
-    .prepare("UPDATE records SET title = ?, currency = ?, amount_minor = ?, description = ?, occurred_at = ?, categories = ?, place = ?, lat = ?, lng = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING *")
-    .bind(r.title, r.currency, r.amountMinor, r.description, r.occurredAt, JSON.stringify(r.categories), r.place, r.lat, r.lng, now(), id, userId)
-    .first();
-  if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
-  return toRecord(row);
+  const [, { results }] = await db.batch([
+    db
+      .prepare("UPDATE records SET title = ?, currency = ?, amount_minor = ?, description = ?, occurred_at = ?, categories = ?, place = ?, lat = ?, lng = ?, updated_at = ? WHERE id = ? AND user_id = ?")
+      .bind(r.title, r.currency, r.amountMinor, r.description, r.occurredAt, JSON.stringify(r.categories), r.place, r.lat, r.lng, now(), id, userId),
+    db.prepare(`SELECT ${WITH_PHOTOS} FROM records WHERE id = ? AND user_id = ?`).bind(id, userId),
+  ]);
+  if (!results.length) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
+  return toRecord(results[0]);
 }
 
-// 刪除紀錄，回傳它的照片 key（沒有照片回 null），由呼叫端刪 R2 檔
+// 刪除紀錄與它的照片列，回傳照片 key 陣列，由呼叫端刪 R2 檔
 export async function deleteRecord(db, userId, id) {
-  const row = await db.prepare("DELETE FROM records WHERE id = ? AND user_id = ? RETURNING photo_key").bind(id, userId).first();
-  if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
-  return row.photo_key;
+  const [photos, deleted] = await db.batch([
+    db.prepare("DELETE FROM photos WHERE record_id = ? AND user_id = ? RETURNING object_key").bind(id, userId),
+    db.prepare("DELETE FROM records WHERE id = ? AND user_id = ? RETURNING id").bind(id, userId),
+  ]);
+  if (!deleted.results.length) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
+  return photos.results.map((p) => p.object_key);
 }
 
-// 換上（或清掉）照片，回傳 { record, oldKey }；oldKey 由呼叫端刪 R2 檔
-export async function setPhoto(db, userId, id, photo) {
-  const old = await rowById(db, userId, id);
+const FULL_PHOTOS = `一筆紀錄最多 ${MAX_PHOTOS} 張照片，請先移除不要的照片`;
+
+// 寫 R2 之前先確認紀錄存在、照片還沒滿
+export async function checkPhotoSlot(db, userId, id) {
   const row = await db
-    .prepare("UPDATE records SET photo_key = ?, photo_width = ?, photo_height = ?, updated_at = ? WHERE id = ? AND user_id = ? RETURNING *")
-    .bind(photo?.key ?? null, photo?.width ?? null, photo?.height ?? null, now(), id, userId)
+    .prepare("SELECT (SELECT COUNT(*) FROM photos WHERE record_id = r.id AND user_id = r.user_id) AS n FROM records r WHERE r.id = ? AND r.user_id = ?")
+    .bind(id, userId)
     .first();
   if (!row) throw new HttpError(404, "找不到這筆紀錄，可能已被刪除");
-  return { record: toRecord(row), oldKey: old.photo_key };
+  if (row.n >= MAX_PHOTOS) throw new HttpError(409, FULL_PHOTOS);
+}
+
+// 加一張照片（已寫進 R2 的 { key, width, height }），回傳更新後的紀錄。
+// 數量上限寫在 INSERT 的條件裡，同時上傳也不會超過；沒插進去時由呼叫端刪掉 R2 檔
+export async function addPhoto(db, userId, id, photo) {
+  const t = now();
+  const [inserted] = await db.batch([
+    db
+      .prepare("INSERT INTO photos (user_id, record_id, object_key, width, height, created_at) SELECT ?, id, ?, ?, ?, ? FROM records WHERE id = ? AND user_id = ? AND (SELECT COUNT(*) FROM photos WHERE record_id = ? AND user_id = ?) < ? RETURNING id")
+      .bind(userId, photo.key, photo.width, photo.height, t, id, userId, id, userId, MAX_PHOTOS),
+    db.prepare("UPDATE records SET updated_at = ? WHERE id = ? AND user_id = ? AND EXISTS (SELECT 1 FROM photos WHERE object_key = ?)").bind(t, id, userId, photo.key),
+  ]);
+  if (!inserted.results.length) {
+    await checkPhotoSlot(db, userId, id); // 紀錄不見了回 404
+    throw new HttpError(409, FULL_PHOTOS);
+  }
+  return getRecord(db, userId, id);
+}
+
+// 移除一張照片，回傳 { record, key }；key 由呼叫端刪 R2 檔
+export async function removePhoto(db, userId, id, photoId) {
+  const row = await db.prepare("DELETE FROM photos WHERE id = ? AND record_id = ? AND user_id = ? RETURNING object_key").bind(photoId, id, userId).first();
+  if (!row) throw new HttpError(404, "找不到這張照片，可能已被移除");
+  await db.prepare("UPDATE records SET updated_at = ? WHERE id = ? AND user_id = ?").bind(now(), id, userId).run();
+  return { record: await getRecord(db, userId, id), key: row.object_key };
 }
 
 // 這個帳號用過的類別與筆數（多的排前面），給編輯頁的建議清單

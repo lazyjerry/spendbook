@@ -37,7 +37,13 @@ function syncUrl() {
 
 const editUrl = (r) => `/edit?id=${r.id}`;
 const newUrl = (date) => `/edit?date=${ymd(date)}`;
-const thumb = (r, cls) => (r.photoKey ? `<a class="${cls}" href="${editUrl(r)}" tabindex="-1" aria-hidden="true"><img src="${esc(mediaUrl(r.photoKey))}" alt="" loading="lazy" width="${r.photoWidth || 1}" height="${r.photoHeight || 1}"></a>` : "");
+// 縮圖用第一張照片；多張時角落標張數
+const thumb = (r, cls) => {
+  const p = r.photos?.[0];
+  if (!p) return "";
+  const count = r.photos.length > 1 ? `<span class="app-photo-count">${r.photos.length} 張</span>` : "";
+  return `<a class="${cls}" href="${editUrl(r)}" tabindex="-1" aria-hidden="true"><img src="${esc(mediaUrl(p.key))}" alt="" loading="lazy" width="${p.width || 1}" height="${p.height || 1}">${count}</a>`;
+};
 // 類別與地點（都是選填，沒有就不顯示）
 const recordMeta = (r) =>
   r.categories?.length || r.place
@@ -47,7 +53,7 @@ const recordMeta = (r) =>
 // 一筆紀錄的卡片；withDate 時顯示完整日期，否則只有時間
 function recordCard(r, withDate) {
   const at = new Date(r.occurredAt);
-  return `<article class="app-record${r.photoKey ? " app-has-photo" : ""}">
+  return `<article class="app-record${r.photos?.length ? " app-has-photo" : ""}">
   ${thumb(r, "app-record-cover")}
   <div class="app-record-body">
     <div class="app-record-head"><h3><a href="${editUrl(r)}">${esc(r.title)}</a></h3><strong class="app-amount">${esc(formatMoney(r.amountMinor, r.currency))}</strong></div>
