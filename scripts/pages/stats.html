@@ -1,15 +1,9 @@
 <div class="stack" data-tabs>
-<div class="chips" role="group" aria-label="統計分區">
-  <button class="chip" type="button" data-tab="overview" aria-pressed="true">總覽與搜尋</button>
-  <button class="chip" type="button" data-tab="trend" aria-pressed="false">走勢</button>
-  <button class="chip" type="button" data-tab="cycle" aria-pressed="false">週期</button>
-  <button class="chip" type="button" data-tab="alert" aria-pressed="false">警告</button>
-  <button class="chip" type="button" data-tab="share" aria-pressed="false">分享</button>
-</div>
-<div data-tab-panel="overview"><div class="card-grid"><section class="card accent-coral is-roomy is-wide" aria-labelledby="range-title"><div class="card-heading">
+<section class="card accent-coral is-roomy" aria-labelledby="range-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">01</span>
   <div><h2 id="range-title">範圍、幣別與關鍵字</h2><p>套用到每個頁籤；不同幣別分開統計，不做匯率換算</p></div>
 </div>
+<div class="stack"><div class="app-filter-bar"><p class="app-summary" id="range-summary"></p><button class="btn secondary is-sm" type="button" id="range-toggle" aria-expanded="true" aria-controls="range-form">收合</button></div>
 <form class="panel" id="range-form"><div class="stack"><fieldset class="segmented app-views">
   <legend class="visually-hidden">快速範圍</legend>
   <label><input type="radio" name="range" value="month" checked><span>本月</span></label>
@@ -36,7 +30,15 @@
   <p class="hint" id="stats-currency-hint">只列出用過的幣別</p>
 </div>
 <button class="btn is-block" type="submit" id="range-btn">套用<span class="btn-arrow" aria-hidden="true">→</span></button>
-<p class="status" id="stats-status" role="status"></p></div></form></section>
+<p class="status" id="stats-status" role="status"></p></div></form></div></section>
+<div class="chips" role="group" aria-label="統計分區">
+  <button class="chip" type="button" data-tab="overview" aria-pressed="true">總覽與搜尋</button>
+  <button class="chip" type="button" data-tab="trend" aria-pressed="false">走勢</button>
+  <button class="chip" type="button" data-tab="cycle" aria-pressed="false">週期</button>
+  <button class="chip" type="button" data-tab="alert" aria-pressed="false">警告</button>
+  <button class="chip" type="button" data-tab="share" aria-pressed="false">分享</button>
+</div>
+<div data-tab-panel="overview"><div class="card-grid">
 <section class="card accent-blue is-roomy is-wide" aria-labelledby="overview-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">02</span>
   <div><h2 id="overview-title">總覽</h2><p id="overview-range">範圍內的筆數與花費</p></div>
@@ -56,41 +58,41 @@
 </div>
 <ol class="app-rank" id="top-list"></ol></section></div></div>
 <div data-tab-panel="trend" hidden><div class="card-grid"><section class="card accent-violet is-roomy is-wide" aria-labelledby="trend-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">01</span>
+  <span class="index-badge" aria-hidden="true">02</span>
   <div><h2 id="trend-title">花費走勢</h2><p id="trend-sub">大筆的錢落在哪幾天</p></div>
 </div>
 <div class="stack"><div class="app-chart" id="trend-chart"></div>
 <details class="app-chart-data"><summary>看數字表</summary><div id="trend-table"></div></details></div></section>
 <section class="card accent-green is-roomy" aria-labelledby="weekday-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">02</span>
+  <span class="index-badge" aria-hidden="true">03</span>
   <div><h2 id="weekday-title">星期幾花最多</h2><p>各星期的花費合計</p></div>
 </div>
 <div class="app-chart" id="weekday-chart"></div></section>
 <section class="card accent-blue is-roomy" aria-labelledby="hour-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">03</span>
+  <span class="index-badge" aria-hidden="true">04</span>
   <div><h2 id="hour-title">什麼時段花最多</h2><p>依紀錄的時間分成六個時段</p></div>
 </div>
 <div class="app-chart" id="hour-chart"></div></section></div></div>
 <div data-tab-panel="cycle" hidden><div class="card-grid"><section class="card accent-green is-roomy is-wide" aria-labelledby="cycle-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">01</span>
+  <span class="index-badge" aria-hidden="true">02</span>
   <div><h2 id="cycle-title">重複發生的事</h2><p id="cycle-sub">標題相同的紀錄算同一件事，以全部歷史計算間隔</p></div>
 </div>
 <div class="stack"><ul class="app-insight" id="cycle-keyword" hidden></ul>
 <ul class="app-insight" id="cycle-list"></ul>
 <p class="hint">最近一次間隔不到平常一半算「太密」，距上次超過平常 1.5 倍算「太久沒發生」；數字與標點不影響比對，「iPhone 15」與「iPhone 16」算同一件</p></div></section></div></div>
 <div data-tab-panel="alert" hidden><div class="card-grid"><section class="card accent-coral is-roomy is-wide" aria-labelledby="alert-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">01</span>
+  <span class="index-badge" aria-hidden="true">02</span>
   <div><h2 id="alert-title">金額偏高的紀錄</h2><p id="alert-sub">範圍內的紀錄，跟自己的歷史比</p></div>
 </div>
 <div class="stack"><ul class="app-insight" id="alert-list"></ul>
 <p class="hint">比同一件事平常貴 1.5 倍以上，或遠高於你平常的大筆（超過四分位距上界）就列出；不設固定金額門檻</p></div></section>
 <section class="card accent-violet is-roomy is-wide" aria-labelledby="month-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">02</span>
+  <span class="index-badge" aria-hidden="true">03</span>
   <div><h2 id="month-title">花得特別多的月份</h2><p>範圍內的月份，跟前 12 個月的平均比</p></div>
 </div>
 <ul class="app-insight" id="month-list"></ul></section></div></div>
 <div data-tab-panel="share" hidden><div class="card-grid"><section class="card accent-blue is-roomy is-wide" aria-labelledby="summary-title"><div class="card-heading">
-  <span class="index-badge" aria-hidden="true">01</span>
+  <span class="index-badge" aria-hidden="true">02</span>
   <div><h2 id="summary-title">分享統計摘要</h2><p id="summary-sub">依目前的範圍、幣別與關鍵字產生</p></div>
 </div>
 <div class="stack"><div class="switches"><label class="switch"><span><strong>顯示金額</strong><small>關閉後只分享筆數與哪些事</small></span><input type="checkbox" id="sum-amount" checked><i aria-hidden="true"></i></label><label class="switch"><span><strong>包含警告</strong><small>金額偏高的紀錄與月份</small></span><input type="checkbox" id="sum-alert" checked><i aria-hidden="true"></i></label><label class="switch"><span><strong>包含週期</strong><small>太密或太久沒發生的事</small></span><input type="checkbox" id="sum-cycle" checked><i aria-hidden="true"></i></label></div>

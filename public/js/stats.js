@@ -104,6 +104,7 @@ function render() {
     node.textContent = values[i];
   });
   $("#overview-range").textContent = `${rangeText}，${filterText}`;
+  setFilterSummary(`${rangeText}，${filterText}`);
 
   // 走勢：範圍 62 天以內逐日，超過就逐月
   const daily = Math.round((to - from) / 86400000) <= 62;
@@ -274,6 +275,7 @@ async function load() {
   } catch (err) {
     if (mine !== seq) return;
     setStatus(status, err.message, "error");
+    setCollapsed(false); // 錯誤訊息在範圍卡裡，收著會看不到
   }
 }
 
@@ -317,6 +319,31 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(render, 150);
 });
+
+// 範圍卡在子頁籤上方、套用到每個頁籤，可收合；切到別的頁籤就收起來，收合時顯示目前條件。
+// render() 會呼叫 setFilterSummary，第一次 render 在 load() 的 await 之後，這裡的 const／let 已初始化
+const filterToggle = $("#range-toggle");
+const filterSummaryEl = $("#range-summary");
+let filterSummary = "";
+let currentTab = document.querySelector('[data-tab][aria-pressed="true"]')?.dataset.tab;
+
+function setCollapsed(collapsed) {
+  form.hidden = collapsed;
+  filterToggle.setAttribute("aria-expanded", String(!collapsed));
+  filterToggle.textContent = collapsed ? "展開" : "收合";
+  filterSummaryEl.textContent = collapsed ? filterSummary : "";
+}
+function setFilterSummary(text) {
+  filterSummary = text;
+  if (form.hidden) filterSummaryEl.textContent = text;
+}
+filterToggle.addEventListener("click", () => setCollapsed(!form.hidden));
+for (const tab of document.querySelectorAll("[data-tab]")) {
+  tab.addEventListener("click", () => {
+    if (tab.dataset.tab !== currentTab) setCollapsed(true);
+    currentTab = tab.dataset.tab;
+  });
+}
 
 range = presetRange("month");
 fillInputs(range);

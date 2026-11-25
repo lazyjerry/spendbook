@@ -221,3 +221,7 @@
 .app-viewer-img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: var(--paper); border: var(--line); }
 .app-viewer-nav { justify-content: space-between; }
 .app-viewer-nav[hidden] { display: none; }
+
+/* 統計頁共用的範圍卡：放在子頁籤上方，可收合；收合時左邊顯示目前條件（public/js/stats.js） */
+.app-filter-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-2) var(--space-3); }
+.app-filter-bar .app-summary { flex: 1 1 12em; min-width: 0; }
