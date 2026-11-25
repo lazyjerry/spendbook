@@ -132,7 +132,7 @@
 </div></div>
 <div class="actions"><button class="btn secondary" type="button" id="locate-btn">使用目前位置</button><button class="btn secondary" type="button" id="reverse-btn">用座標查地址</button><button class="btn is-link" type="button" id="place-clear-btn">清除地點</button></div>
 <p class="status" id="geo-status" role="status"></p></div></section>
-<section class="card accent-green is-roomy" aria-labelledby="photo-title"><div class="card-heading">
+<section class="card accent-green is-roomy is-wide" aria-labelledby="photo-title"><div class="card-heading">
   <span class="index-badge" aria-hidden="true">03</span>
   <div><h2 id="photo-title">照片（選填）</h2><p>收據或實物，最多 10 張；上傳前在裝置上壓縮</p></div>
 </div>
@@ -145,9 +145,9 @@
   <span class="index-badge" aria-hidden="true">04</span>
   <div><h2 id="save-title">儲存</h2><p>照片在儲存時一併上傳</p></div>
 </div>
-<div class="stack"><button class="btn is-block" type="submit" id="save-btn">儲存紀錄<span class="btn-arrow" aria-hidden="true">→</span></button>
+<div class="stack"><button class="btn is-block app-save" type="submit" id="save-btn">儲存紀錄<span class="btn-arrow" aria-hidden="true">→</span></button>
 <p class="status" id="save-status" role="status"></p>
-<div class="actions"><a class="btn secondary" href="/" id="back-link">回紀錄</a><button hidden class="btn is-link" type="button" id="delete-btn">刪除這筆紀錄</button></div></div></section></div>
+<div class="app-save-links"><a class="btn is-link app-quiet-link" href="/" id="back-link">← 回紀錄</a><button hidden class="btn is-link app-quiet-link app-danger-link" type="button" id="delete-btn">刪除這筆紀錄</button></div></div></section></div>
 <aside class="note">
   <span class="note-icon" aria-hidden="true">i</span>
   <div><strong>照片會送到哪裡</strong><p>照片會先在你的手機或電腦上縮小成 JPEG，清掉拍攝位置等 EXIF 資料後才上傳，原始檔不會傳出去。</p></div>

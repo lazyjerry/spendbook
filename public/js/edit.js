@@ -4,6 +4,7 @@ import { $, CURRENCIES, amountInputValue, api, bindLogout, charCount, currencyIn
 import { attachCalculator } from "./calc.js";
 import { createMap } from "./map.js";
 import { compressImage } from "./photo.js";
+import { openPhotos } from "./photo-view.js";
 import { tagSuggest } from "./tag-suggest.js";
 
 bindLogout();
@@ -67,9 +68,11 @@ attachCalculator({
 const MAX_PHOTOS = 10; // 與 src/db.js 相同
 const keptPhotos = () => existingPhotos.filter((p) => !removedPhotoIds.has(p.id));
 const photoCount = () => keptPhotos().length + pendingPhotos.length;
+const photoSrcs = () => [...keptPhotos().map((p) => mediaUrl(p.key)), ...pendingPhotos.map((p) => p.url)];
 
 function showPhotos() {
-  const item = (src, info, attrs) => `<li class="app-photo"><a href="${esc(src)}" target="_blank" rel="noopener"><img src="${esc(src)}" alt="" loading="lazy"></a>
+  let n = 0; // 縮圖在畫面上的順序，點了從這張開始看
+  const item = (src, info, attrs) => `<li class="app-photo"><button class="app-photo-btn" type="button" data-view="${n}" aria-label="放大看第 ${++n} 張照片"><img src="${esc(src)}" alt="" loading="lazy"></button>
   <div class="app-photo-bar"><span>${esc(info)}</span><button class="btn is-sm secondary" type="button" ${attrs}>移除</button></div></li>`;
   photoList.innerHTML = [
     ...keptPhotos().map((p, i) => item(mediaUrl(p.key), `第 ${i + 1} 張`, `data-photo-id="${p.id}" aria-label="移除第 ${i + 1} 張照片"`)),
@@ -116,6 +119,7 @@ $("#pick-input").addEventListener("change", (e) => pickPhotos(e.target));
 photoList.addEventListener("click", (e) => {
   const btn = e.target.closest("button");
   if (!btn) return;
+  if (btn.dataset.view !== undefined) return openPhotos(photoSrcs(), Number(btn.dataset.view));
   if (btn.dataset.pending !== undefined) {
     const [p] = pendingPhotos.splice(Number(btn.dataset.pending), 1);
     URL.revokeObjectURL(p.url);

@@ -84,7 +84,6 @@
 .app-photo-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(136px, 1fr)); gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
 .app-photo-list:empty { display: none; }
 .app-photo { display: grid; gap: var(--space-2); align-content: start; min-width: 0; margin: 0; }
-.app-photo a { display: block; }
 .app-photo img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; background: var(--paper); border: var(--line); }
 .app-photo-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-1) var(--space-2); color: var(--ink-2); font-size: var(--fs-xs); line-height: var(--lh-snug); }
 
@@ -208,3 +207,17 @@
 /* 紀錄卡片的照片張數（多張時標在縮圖右下角） */
 .app-record-cover, .app-tl-photo { position: relative; }
 .app-photo-count { position: absolute; right: var(--space-1); bottom: var(--space-1); padding: 0 var(--space-1); color: var(--white); background: var(--ink); font: var(--fw-heavy) var(--fs-2xs)/var(--lh-snug) var(--mono); }
+
+/* 編輯頁的儲存卡：儲存鈕加大並帶珊瑚色硬陰影；回紀錄與刪除降成小字連結，分放左右兩端 */
+.app-save { min-height: calc(var(--control-h) + var(--space-3)); font-size: var(--fs-lg); box-shadow: var(--space-1) var(--space-1) 0 var(--coral); }
+.app-save-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-2) var(--space-4); }
+.app-save-links .app-quiet-link { color: var(--ink-2); font-size: var(--fs-xs); font-weight: var(--fw-bold); }
+.app-save-links .app-quiet-link.app-danger-link { color: var(--danger-ink); }
+
+/* 點縮圖看大圖：縮圖是按鈕（列表、時間軸、編輯頁），大圖開在 popup（public/js/photo-view.js） */
+.app-photo-btn { display: block; width: 100%; padding: 0; color: inherit; background: none; border: 0; font: inherit; cursor: zoom-in; }
+.app-photo-btn:focus-visible { outline: var(--focus); outline-offset: 2px; }
+.app-viewer { width: min(960px, calc(100% - 2 * var(--space-4))); }
+.app-viewer-img { display: block; width: 100%; max-height: 72vh; object-fit: contain; background: var(--paper); border: var(--line); }
+.app-viewer-nav { justify-content: space-between; }
+.app-viewer-nav[hidden] { display: none; }

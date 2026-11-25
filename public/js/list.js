@@ -1,6 +1,7 @@
 // 紀錄頁：搜尋，加上五種檢視——列表、時間軸（兩者依時間新到舊、捲到底續載）、月曆、週曆、日曆（依期間取資料，可前後翻）。
 // 檢視方式、日期與關鍵字寫進網址（?view=&date=&q=），從編輯頁回來或重新整理都停在同一個畫面。
 import { $, WEEKDAYS, addDays, addMonths, autoLoadMore, bindLogout, dateLabel, esc, fetchPage, fetchRange, formatAmount, formatMoney, groupByDay, hm, loadSettings, mediaUrl, parseYmd, rangeLabel, setStatus, showFlash, startOfDay, startOfMonth, startOfWeek, sumByCurrency, totalsText, ymd } from "./common.js";
+import { openPhotos } from "./photo-view.js";
 
 bindLogout();
 showFlash();
@@ -37,12 +38,14 @@ function syncUrl() {
 
 const editUrl = (r) => `/edit?id=${r.id}`;
 const newUrl = (date) => `/edit?date=${ymd(date)}`;
-// 縮圖用第一張照片；多張時角落標張數
+// 縮圖用第一張照片；多張時角落標張數。點縮圖在 popup 看這筆的全部照片
 const thumb = (r, cls) => {
   const p = r.photos?.[0];
   if (!p) return "";
-  const count = r.photos.length > 1 ? `<span class="app-photo-count">${r.photos.length} 張</span>` : "";
-  return `<a class="${cls}" href="${editUrl(r)}" tabindex="-1" aria-hidden="true"><img src="${esc(mediaUrl(p.key))}" alt="" loading="lazy" width="${p.width || 1}" height="${p.height || 1}">${count}</a>`;
+  const n = r.photos.length;
+  const count = n > 1 ? `<span class="app-photo-count">${n} 張</span>` : "";
+  const srcs = esc(JSON.stringify(r.photos.map((x) => mediaUrl(x.key))));
+  return `<button class="${cls} app-photo-btn" type="button" data-photos="${srcs}" aria-label="看「${esc(r.title)}」的照片${n > 1 ? `（${n} 張）` : ""}"><img src="${esc(mediaUrl(p.key))}" alt="" loading="lazy" width="${p.width || 1}" height="${p.height || 1}">${count}</button>`;
 };
 // 類別與地點（都是選填，沒有就不顯示）
 const recordMeta = (r) =>
@@ -279,6 +282,11 @@ viewEl.addEventListener("click", (e) => {
   state.view = "day";
   document.querySelector('input[name="view"][value="day"]').checked = true;
   reload();
+});
+// 紀錄卡片的縮圖：在 popup 看這筆的照片，不離開紀錄頁
+viewEl.addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-photos]");
+  if (btn) openPhotos(JSON.parse(btn.dataset.photos));
 });
 
 qInput.value = state.q;
