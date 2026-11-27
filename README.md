@@ -44,6 +44,7 @@
 
 - **幣別**：新台幣、日圓、美元等 14 種，金額以最小單位的整數保存。不同幣別分開合計，不做匯率換算。
 - **照片**：一筆最多 10 張。在瀏覽器縮到設定的長邊、轉成 JPEG 並移除 EXIF 後才上傳，原始檔不離開裝置。
+- **草稿**：新增、修改頁還沒儲存的內容（含剛選的照片）邊打邊存在這台裝置的 IndexedDB，重新開啟時還原；儲存、刪除或按「捨棄沒儲存的內容」才清掉，登出時整批清掉。草稿不會送到伺服器。
 - **登入**：帳號密碼或通行金鑰（WebAuthn）。密碼以 PBKDF2-SHA256 雜湊保存；同一個來源 15 分鐘內密碼登入最多嘗試 10 次。
 - **時區**：時間以 UTC 保存，畫面依裝置時區顯示與分組。
 - **類別**：最多 10 個，每個 20 字內、不含空白。只用來整理與搜尋，不做類別預算。
@@ -112,7 +113,7 @@ npm run dev                       # http://localhost:8787，帳號 admin、密�
 | `npm run icons` | 重新產生 PWA icon 與 favicon（需要 Pillow，macOS 字型） |
 | `npm run vendor` | 把 SimpleWebAuthn 與 Leaflet 前端複製到 `public/vendor/` |
 | `npm run readme-media` | 用暫存資料庫與示範資料重拍 README 的截圖與操作影片（需要 Playwright、Pillow、ffmpeg）；影片先存成 `docs/readme-media/demo.mp4`（不進版控）再轉 `demo.gif` |
-| `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、統計與 MCP tool 的單元測試、頁面引用、PWA 檔案檢查 |
+| `npm run check` | 重產頁面、Jerry UI 規範（有裝 `build-jerry-cloudflare-page` skill 時）、JS 語法、統計、MCP tool 與草稿的單元測試、頁面引用、PWA 檔案檢查 |
 | `npm test` | 上一項加 API 冒煙測試（自己起一個用暫存資料庫的 `wrangler dev`） |
 
 ## 專案結構
