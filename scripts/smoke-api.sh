@@ -60,6 +60,7 @@ expect "密碼錯誤回 401" 401 "$(req POST /api/login "$bad_login")"
 expect "登入成功" 200 "$(req POST /api/login "$good_login")"
 [ "$(field initialPassword)" = "true" ] || [ -z "$dev_pid" ] && ok "第一次登入回報還在用初始密碼" || ng "初始密碼旗標" "$(head -c 200 "$tmp/body")"
 expect "讀帳號" 200 "$(req GET /api/account)"
+[[ "$(field id)" =~ ^[1-9][0-9]*$ ]] && ok "帳號帶編號（編輯頁草稿依它區隔帳號）" || ng "帳號編號" "$(head -c 200 "$tmp/body")"
 
 expect "缺標題回 422" 422 "$(req POST /api/records '{"title":"","currency":"TWD","amount":"100","occurredAt":"2026-11-20T04:00:00.000Z"}')"
 expect "不在清單的幣別回 422" 422 "$(req POST /api/records '{"title":"x","currency":"XXX","amount":"100","occurredAt":"2026-11-20T04:00:00.000Z"}')"

@@ -1,4 +1,5 @@
 // 各頁共用：API 呼叫、登入導向、幣別與金額、日期工具、設定預設值、小工具。
+import { clearDrafts } from "./draft.js";
 
 // [代碼, 名稱, 小數位數, 符號]。代碼與小數位數要和 src/db.js 的 CURRENCIES 一致。
 export const CURRENCIES = [
@@ -103,6 +104,7 @@ export function bindLogout() {
   if (!btn) return;
   btn.addEventListener("click", async () => {
     if (!confirm("確定要登出嗎？")) return;
+    await clearDrafts(); // 編輯頁沒儲存的草稿只在這台裝置，登出就清掉，下一個人看不到
     try {
       await api("/api/logout", { method: "POST" });
     } finally {

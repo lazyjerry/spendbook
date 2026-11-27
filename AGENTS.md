@@ -23,6 +23,7 @@
 - **資料以帳號隔離**：`src/db.js` 每個查詢都帶 `user_id`；照片 key 是 `u<帳號編號>/<uuid>.jpg`，`src/media.js` 讀取時核對擁有者。新增查詢或資料表時照做。
 - **金額存整數**：`records.amount_minor` 是幣別的最小單位。幣別清單有兩份要一起改：`src/db.js` 的 `CURRENCIES`、`public/js/common.js` 的 `CURRENCIES`。設定預設值同理（兩邊的 `DEFAULT_SETTINGS`）。
 - **時間**：`occurred_at` 存 UTC ISO 字串；依日期分組、範圍換算都在前端用裝置時區做，後端只比對 UTC 時間。
+- **編輯頁草稿**：`public/js/edit.js` 沒儲存的內容存成本機草稿（`public/js/draft.js`，IndexedDB，key 帶帳號編號，登出時清掉）。編輯頁新增欄位時，`snapshot()` 與 `applyDraft()` 要一起加。
 - **service worker 不快取私人資料**：`public/sw.js` 只預先快取離線頁與它用到的檔案。改了這些檔案要把 `VERSION` 加一。
 - **初始密碼提示**：帳號的 `password_changed_at` 是 NULL 代表還在用 `APP_PASSWORD` 登入。登入回應與 `/api/account` 以 `initialPassword` 回報，登入頁據此帶去設定頁，各頁由 `public/js/common.js` 的 `bindLogout()` 顯示提示。新增登入後的頁面要呼叫 `bindLogout()`。
 - **地點查詢走後端代理**：前端只打 `/api/geo/search`、`/api/geo/reverse`，由 `src/geo.js` 轉 OpenStreetMap Nominatim（通用 User-Agent、快取 1 天）；前端反查等 1.1 秒防抖，遵守每秒 1 次。OSM 圖磚要帶 `referrerPolicy`（全站 `Referrer-Policy: same-origin`）。Leaflet 自行託管在 `public/vendor/leaflet`（`npm run vendor`），樣式表由 `public/js/map.js` 動態載入。測試不打 Nominatim。

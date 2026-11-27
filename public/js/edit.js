@@ -1,7 +1,9 @@
 // 新增／修改紀錄：/edit 是新增，/edit?id=<編號> 是修改；/edit?date=YYYY-MM-DD 帶入指定日期（時間用現在）。
 // 儲存順序：先存紀錄，再處理照片（先移除、再逐張上傳新的）。照片在裝置上壓成 JPEG 才上傳，一筆最多 MAX_PHOTOS 張。
+// 沒儲存的內容邊打邊存成這台裝置上的草稿（draft.js），重新開啟時還原；儲存或刪除成功才清掉。
 import { $, CURRENCIES, amountInputValue, api, bindLogout, charCount, currencyInfo, esc, loadSettings, localInputValue, mediaUrl, parseYmd, setFlash, setStatus, showFlash } from "./common.js";
 import { attachCalculator } from "./calc.js";
+import { draftKey, isStale, readDraft, removeDraft, writeDraft } from "./draft.js";
 import { createMap } from "./map.js";
 import { compressImage } from "./photo.js";
 import { openPhotos } from "./photo-view.js";
@@ -45,10 +47,10 @@ currency.addEventListener("change", updateAmountHint);
 description.addEventListener("input", updateDescHint);
 $("#now-btn").addEventListener("click", () => {
   occurredAt.value = localInputValue(new Date());
-  dirty = true;
+  markDirty();
 });
 form.addEventListener("input", () => {
-  dirty = true;
+  markDirty();
 });
 
 // ---------- 金額計算機 ----------
@@ -60,7 +62,7 @@ attachCalculator({
   onSubmit(minor) {
     amount.value = amountInputValue(minor, currency.value);
     markInvalid(amount, false);
-    dirty = true;
+    markDirty();
   },
 });
 
@@ -103,7 +105,7 @@ async function pickPhotos(input) {
     try {
       const out = await compressImage(file, { maxEdge: settings.maxEdge, quality: settings.quality });
       pendingPhotos.push({ ...out, url: URL.createObjectURL(out.blob) });
-      dirty = true;
+      markDirty();
       showPhotos();
     } catch (err) {
       errors.push(err.message);
@@ -126,7 +128,7 @@ photoList.addEventListener("click", (e) => {
   } else {
     removedPhotoIds.add(Number(btn.dataset.photoId));
   }
-  dirty = true;
+  markDirty();
   showPhotos();
   setStatus(photoStatus, photoNote());
 });
@@ -138,6 +140,8 @@ async function syncPhotos(recordId) {
     const data = await api(`/api/records/${recordId}/photos/${photoId}`, { method: "DELETE" });
     removedPhotoIds.delete(photoId);
     existingPhotos = data.record.photos;
+    baseUpdatedAt = data.record.updatedAt;
+    await saveDraftNow(); // 中途關掉頁面，草稿只留還沒處理的照片
   }
   const total = pendingPhotos.length;
   while (pendingPhotos.length) {
@@ -147,6 +151,8 @@ async function syncPhotos(recordId) {
     pendingPhotos.shift();
     URL.revokeObjectURL(p.url);
     existingPhotos = data.record.photos;
+    baseUpdatedAt = data.record.updatedAt;
+    await saveDraftNow();
   }
 }
 
@@ -178,7 +184,7 @@ function addCategories(text) {
     if (categories.includes(t)) continue;
     if (categories.length >= MAX_CATEGORIES) return `類別最多 ${MAX_CATEGORIES} 個`;
     categories.push(t);
-    dirty = true;
+    markDirty();
   }
   renderCategories();
   return "";
@@ -215,7 +221,7 @@ categoryList.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-i]");
   if (!btn) return;
   categories.splice(Number(btn.dataset.i), 1);
-  dirty = true;
+  markDirty();
   renderCategories();
   categoryInput.focus();
 });
@@ -254,7 +260,7 @@ function setCoords(la, ln, { moveMap = true, zoom } = {}) {
   lng.value = ln.toFixed(6);
   markInvalid(lat, false);
   markInvalid(lng, false);
-  dirty = true;
+  markDirty();
   if (moveMap && geoMap) geoMap.setPosition(la, ln, zoom);
 }
 
@@ -263,7 +269,7 @@ function fillPlace(text, { force = false } = {}) {
   if (!force && place.value.trim() && place.value !== autoPlace) return false;
   place.value = autoPlace = clipPlace(text);
   markInvalid(place, false);
-  dirty = true;
+  markDirty();
   return true;
 }
 
@@ -349,7 +355,7 @@ function clearPlace() {
   geoResults.innerHTML = "";
   for (const el of [place, lat, lng]) markInvalid(el, false);
   if (geoMap) geoMap.clear();
-  dirty = true;
+  markDirty();
   setStatus(geoStatus, "已清除地點與座標");
 }
 
@@ -413,12 +419,14 @@ form.addEventListener("submit", async (e) => {
   saveBtn.disabled = true;
   form.inert = true;
   setStatus(saveStatus, "儲存中…");
+  await saveDraftNow(); // 送出前先把最後幾個字存進草稿，儲存失敗或連線中斷時都還在
   let savedId = id;
   try {
     const json = { title: title.value, currency: currency.value, amount: amount.value.trim(), description: description.value, occurredAt: at.toISOString() };
     Object.assign(json, { categories, place: place.value, lat: lat.value === "" ? null : Number(lat.value), lng: lng.value === "" ? null : Number(lng.value) });
     const data = id ? await api(`/api/records/${id}`, { method: "PUT", json }) : await api("/api/records", { method: "POST", json });
     savedId = data.record.id;
+    baseUpdatedAt = data.record.updatedAt;
   } catch (err) {
     saveBtn.disabled = false;
     form.inert = false;
@@ -426,24 +434,30 @@ form.addEventListener("submit", async (e) => {
     focusField(err.fields);
     return;
   }
-  // 紀錄已存好；照片失敗時留在這筆的修改頁，再按一次儲存就會重傳剩下的
+  // 紀錄已存好；草稿改記在這筆紀錄名下，只剩還沒處理的照片。照片失敗時留在這筆的修改頁，再按一次儲存就會重傳剩下的
+  if (!id && userId) {
+    await removeDraft(draftId);
+    draftId = draftKey(userId, savedId);
+  }
+  await saveDraftNow();
   try {
     await syncPhotos(savedId);
   } catch (err) {
     dirty = false;
     if (!id) {
-      setFlash(`紀錄已儲存，但照片沒傳上去：${err.message}`);
+      setFlash(`紀錄已儲存，但照片沒傳上去：${err.message}。照片留在這頁，再按一次儲存重試`);
       location.replace(`/edit?id=${savedId}`);
       return;
     }
     saveBtn.disabled = false;
     form.inert = false;
-    dirty = true; // 還有沒處理完的照片，離開前要提醒
+    markDirty(); // 還有沒處理完的照片，離開前要提醒
     showPhotos();
     setStatus(saveStatus, `紀錄已儲存，但照片沒處理好：${err.message}。再按一次儲存重試`, "error");
     return;
   }
   dirty = false;
+  await removeDraft(draftId);
   setFlash(id ? "已更新紀錄" : "已新增紀錄");
   location.href = backUrl();
 });
@@ -464,6 +478,7 @@ deleteBtn.addEventListener("click", async () => {
   try {
     await api(`/api/records/${id}`, { method: "DELETE" });
     dirty = false;
+    await removeDraft(draftId);
     setFlash("已刪除紀錄");
     location.href = backUrl();
   } catch (err) {
@@ -476,15 +491,101 @@ window.addEventListener("beforeunload", (e) => {
   if (dirty) e.preventDefault();
 });
 
+// ---------- 草稿（沒儲存的內容存在這台裝置，見 draft.js） ----------
+// 要放在「載入」之前：載入區塊會 await，期間觸發的事件要能用到這裡的變數
+let userId = 0; // 讀不到帳號就不存草稿
+let draftId = ""; // draftKey(userId, 紀錄編號)；新增的紀錄存好後改成那筆的 key
+let baseUpdatedAt = null; // 開始編輯時伺服器上紀錄的 updatedAt，用來判斷還原的草稿是不是過時了
+let draftTimer = 0;
+
+function markDirty() {
+  dirty = true;
+  if (!draftId) return;
+  clearTimeout(draftTimer);
+  draftTimer = setTimeout(saveDraftNow, 400);
+}
+
+function snapshot() {
+  return {
+    baseUpdatedAt,
+    title: title.value,
+    currency: currency.value,
+    amount: amount.value,
+    occurredAt: occurredAt.value,
+    description: description.value,
+    categories,
+    categoryText: categoryInput.value,
+    place: place.value,
+    autoPlace,
+    lat: lat.value,
+    lng: lng.value,
+    removedPhotoIds: [...removedPhotoIds],
+    pendingPhotos: pendingPhotos.map(({ blob, width, height }) => ({ blob, width, height })),
+  };
+}
+
+async function saveDraftNow() {
+  clearTimeout(draftTimer);
+  draftTimer = 0;
+  if (draftId && dirty) await writeDraft(draftId, snapshot());
+}
+
+// 把草稿填回表單；回傳要給地圖的起點（草稿有座標才有）
+function applyDraft(draft) {
+  title.value = draft.title;
+  currency.value = draft.currency;
+  amount.value = draft.amount;
+  occurredAt.value = draft.occurredAt;
+  description.value = draft.description;
+  categories = [...draft.categories];
+  categoryInput.value = draft.categoryText;
+  place.value = draft.place;
+  autoPlace = draft.autoPlace;
+  lat.value = draft.lat;
+  lng.value = draft.lng;
+  const ids = new Set(existingPhotos.map((p) => p.id)); // 別處已經刪掉的照片不用再移除
+  for (const photoId of draft.removedPhotoIds) if (ids.has(photoId)) removedPhotoIds.add(photoId);
+  const room = MAX_PHOTOS - keptPhotos().length;
+  pendingPhotos = draft.pendingPhotos.slice(0, Math.max(room, 0)).map((p) => ({ ...p, url: URL.createObjectURL(p.blob) }));
+  dirty = true;
+  return readCoords();
+}
+
+function draftNotice(draft, record) {
+  const at = new Date(draft.savedAt);
+  const when = Number.isNaN(at.getTime()) ? "" : `${at.getMonth() + 1}/${at.getDate()} ${localInputValue(at).slice(11)} `;
+  const stale = isStale(draft, record) ? "；這筆紀錄之後在別處改過，儲存會蓋掉那些修改" : "";
+  return `已還原 ${when}沒儲存的內容${stale}。不要的話按下方「捨棄沒儲存的內容」`;
+}
+
+$("#discard-draft-btn").addEventListener("click", async () => {
+  if (!confirm("確定要捨棄沒儲存的內容？會回到上次儲存的樣子。")) return;
+  clearTimeout(draftTimer);
+  dirty = false;
+  await removeDraft(draftId);
+  location.reload();
+});
+
+// 切到別的 App 或關掉分頁時，把還在等的草稿馬上寫進去
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden" && draftTimer) saveDraftNow();
+});
+window.addEventListener("pagehide", () => {
+  if (draftTimer) saveDraftNow();
+});
+
 // ---------- 載入 ----------
 // 設定與紀錄載回來之前先鎖住表單，免得先改的欄位被載入結果蓋掉
 form.inert = true;
 loadCategoryOptions();
 let mapStart = null;
 try {
-  settings = await loadSettings();
+  let me;
+  [settings, me] = await Promise.all([loadSettings(), api("/api/account").catch(() => null)]);
+  let record = null;
   if (id) {
-    const { record } = await api(`/api/records/${id}`);
+    ({ record } = await api(`/api/records/${id}`));
+    baseUpdatedAt = record.updatedAt;
     title.value = record.title;
     currency.value = record.currency;
     amount.value = amountInputValue(record.amountMinor, record.currency);
@@ -508,6 +609,16 @@ try {
     const day = parseYmd(params.get("date"));
     if (day) day.setHours(now.getHours(), now.getMinutes());
     occurredAt.value = localInputValue(day || now);
+  }
+  if (me?.id) {
+    userId = me.id;
+    draftId = draftKey(userId, id);
+    const draft = await readDraft(draftId);
+    if (draft) {
+      mapStart = applyDraft(draft);
+      $("#discard-draft-btn").hidden = false;
+      setStatus(saveStatus, draftNotice(draft, record));
+    }
   }
   updateAmountHint();
   updateDescHint();

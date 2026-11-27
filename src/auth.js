@@ -131,8 +131,9 @@ export async function sessionCookie(env, user) {
   return `${COOKIE}=${payload}.${await sign(requirePassword(env), payload)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`;
 }
 
+// id 給編輯頁的草稿區隔帳號用（public/js/draft.js）
 export function account(user) {
-  return json({ username: user.username, passwordChangedAt: user.password_changed_at, initialPassword: usesInitialPassword(user) });
+  return json({ id: user.id, username: user.username, passwordChangedAt: user.password_changed_at, initialPassword: usesInitialPassword(user) });
 }
 
 // 修改密碼：要先驗目前的密碼；成功後 session_version 加一，其他裝置要重新登入，這台換發新 cookie。
